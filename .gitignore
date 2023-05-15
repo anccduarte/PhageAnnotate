@@ -1,0 +1,10 @@
+# files
+.DS_Store
+
+# folders
+.ipynb_checkpoints
+bin
+experimental
+genomes
+__pycache__
+test_1st
