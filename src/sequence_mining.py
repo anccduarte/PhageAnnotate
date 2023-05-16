@@ -33,23 +33,11 @@ class SeqMining:
             A list of search terms
         num_ids: int
             The number of IDs to be inspected in the database
-            
-        Attributes
-        ----------
-        sci_name: str
-            The scientific name corresponding to the "taxid" provided by the user
         """
-        # parameters
         self.db = SeqMining._check_db(db)
         self.taxid = taxid
         self.terms = [" ".join(term.split()).lower() for term in terms]
         self.num_ids = num_ids
-        # attributes
-        try:
-            self.sci_name = self._get_sci_name()
-        except:
-            e_msg = f"The identifier '{taxid}' cannot be found in NCBI's Taxonomy database."
-            raise ValueError(e_msg)
         
     def __repr__(self) -> str:
         """
@@ -71,14 +59,6 @@ class SeqMining:
         """
         if not os.path.exists(db): os.mkdir(db)
         return db
-    
-    def _get_sci_name(self) -> str:
-        """
-        Returns the scintific name corresponding to the "taxid" provided by the user.
-        """
-        with Entrez.efetch(db='taxonomy', id=self.taxid, retmode='xml') as handle:
-            record = Entrez.read(handle)
-        return record[0]["ScientificName"].split()[0]
         
     def _validate_product(self, product: str) -> bool:
         """
@@ -175,16 +155,12 @@ class SeqMining:
             for id_ in tqdm(id_list):
                 # read record whose ID is <id_>
                 record = utils.read_record(id_=id_, max_tries=5)
-                # guard clause 1 -> validate record taxonomy by comparing it to "sci_name"
-                if self.sci_name not in record.annotations["taxonomy"]:
-                    continue
-                # iterate through the features in "record"
                 for feature in record.features:
-                    # guard clause 2 -> ignore features whose type is not "CDS"
+                    # guard clause 1 -> ignore features whose type is not "CDS"
                     if feature.type != "CDS":
                         continue
                     product = feature.qualifiers.get("product", ["not"])[0]
-                    # guard clause 3 -> ignore feature if "product" is not valid
+                    # guard clause 2 -> ignore feature if "product" is not valid
                     if not self._validate_product(product.lower()):
                         continue
                     # finally, add DNA sequence to the fasta file (all guard clauses avoided)
