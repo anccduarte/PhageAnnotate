@@ -77,6 +77,7 @@ class SeqMining:
         # check whether "not" or "non" is in "product" (include "putative" and "possible"?)
         if any(term in product for term in ["not", "non"]):
             return False
+        # "product" is valid
         return True
     
     @staticmethod
@@ -97,11 +98,13 @@ class SeqMining:
         # if the sequence is located in strand -1, compute its reverse complement
         if feature.location.strand == -1:
             seq = seq.reverse_complement()
+        # return sequence (or its reverse complement)
         return seq
     
     def _get_fname(self) -> str:
         """
-        Returns the name of the .fasta file where the DNA sequences will be stored.
+        Computes and returns the name of the .fasta file where the non-redundant DNA sequences
+        are to be stored.
         """
         # description corresponds to the first term in <self.terms>
         descrip = self.terms[0]
@@ -109,10 +112,11 @@ class SeqMining:
         if len(descrip.split()) > 1: descrip = "_".join(descrip.split())
         # construct the name of the file
         fname = f"txid{self.taxid}_{descrip}_{self.num_ids}"
-        # checks whether <fname> is the name of a file in pwd (avoids collisions)
+        # check whether <fname> is the name of a file in pwd (to avoid overwriting a file)
         i = 0
         while os.path.exists(f"{self.db}/{fname}{f'({i})'*bool(i)}.fasta"):
             i += 1
+        # return the name of the new .fasta file
         return fname + f"({i})"*bool(i)
     
     def _filter_fasta(self, fname: str) -> tuple:
@@ -127,18 +131,23 @@ class SeqMining:
         fname: str
             The name to be given to the new .fasta file
         """
-        # look for non-redundant sequences and add them to the newly created file
+        # open new file for writing non-redundant DNA sequences
         with open(f"{self.db}/{fname}.fasta", "w") as file:
+            # read record in "temp.fasta"
             records = SeqIO.parse(f"{self.db}/temp.fasta", format="fasta")
-            nf, f, filt = 0, 0, set()
+            # initialize other local variables
+            filt = set()
+            num_nf, num_f = 0, 0
+            # main loop -> add non-redundant sequences to the new file
             for record in records:
-                nf += 1
+                num_nf += 1
                 description, seq = record.description, record.seq
                 if seq not in filt:
-                    f += 1
+                    num_f += 1
                     filt.add(seq)
                     file.write(f">{description}\n{seq}\n\n")
-        return nf, f
+        # return number of sequences contained in both .fasta files
+        return num_nf, num_f
     
     def get_sequences(self) -> None:
         """
@@ -166,7 +175,7 @@ class SeqMining:
                     # finally, add DNA sequence to the fasta file (all guard clauses avoided)
                     seq = SeqMining._get_sequence(record=record, feature=feature)
                     file.write(f"> {record.id} | {record.annotations['source']} | {product}\n{seq}\n\n")
-        # filter fasta file in order to create a new file only containing non-redundant sequences
+        # create new .fasta file containing non-redundant DNA sequences
         fname = self._get_fname()
         nf, f = self._filter_fasta(fname)
         # delete original file

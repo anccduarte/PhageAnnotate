@@ -12,7 +12,7 @@ def get_ids(search: str, num_ids: int) -> list:
     Parameters
     ----------
     search: str
-        The query to be performed in NCBI's Nucleotide
+        The query to be performed in NCBI's Nucleotide database
     num_ids: int
         The maximum number of IDs to be retrieved
     """
@@ -27,7 +27,7 @@ def get_ids(search: str, num_ids: int) -> list:
 
 def read_record(id_: int, max_tries: int) -> SeqRecord:
     """
-    Reads the NCBI record corresponding to the ID <id_>.
+    Reads the NCBI Nucleotide's record having the ID <id_>.
 
     Parameters
     ----------

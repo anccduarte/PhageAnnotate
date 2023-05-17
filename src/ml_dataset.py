@@ -43,8 +43,8 @@ class MLDataset:
         try:
             self._translation_table = self._get_translation_table()
         except:
-            e_msg = f"The identifier '{taxid}' cannot be found in NCBI's Taxonomy database."
-            raise ValueError(e_msg)
+            raise ValueError(f"The taxid identifier provided in {file!r} cannot be found in "
+                             "NCBI's Taxonomy database.")
         
     def __repr__(self) -> str:
         """
