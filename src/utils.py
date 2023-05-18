@@ -16,6 +16,8 @@ def get_ids(search: str, num_ids: int) -> list:
     num_ids: int
         The maximum number of IDs to be retrieved
     """
+    # receive warnings in case of excessive usage of the E-utilities
+    Entrez.email = "pg45464@alunos.uminho.pt"
     # print NCBI search
     print(f"NCBI search: {search}")
     # idtype: by default, ESearch returns GI numbers in its output
@@ -36,6 +38,8 @@ def read_record(id_: int, max_tries: int) -> SeqRecord:
     max_tries: int
         The maximum number of tries
     """
+    # receive warnings in case of excessive usage of the E-utilities
+    Entrez.email = "pg45464@alunos.uminho.pt"
     # initialize local variables (try_ and e_msgs)
     try_ = 0
     e_msgs = []
