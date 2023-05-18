@@ -3,14 +3,11 @@
 import os
 import utils
 import warnings
-from Bio import Entrez, SeqIO, SeqRecord, SeqFeature
+from Bio import SeqIO, SeqRecord, SeqFeature
 from tqdm.auto import tqdm
 
 # ignore Byopython warnings (SeqFeature related)
 warnings.filterwarnings("ignore")
-
-# initialize Entrez.email (receive warnings in case of excessive usage of the E-utilities)
-Entrez.email = "pg45464@alunos.uminho.pt"
 
 class SeqMining:
     
@@ -19,7 +16,7 @@ class SeqMining:
     search terms provided by the user.
     """
     
-    def __init__(self, db: str, taxid: str, terms: list[str], num_ids: int) -> None:
+    def __init__(self, db: str, taxid: str, cname: str, terms: list[str], num_ids: int) -> None:
         """
         Initializes an instance of SeqMining.
         
@@ -29,6 +26,8 @@ class SeqMining:
             The name of the directory where the retrieved sequences are stored
         taxid: str
             The txid identifier of the sought-after taxa (as in NCBI's Taxonomy database)
+        cname: str
+            The common name of the target gene product
         terms: list[str]
             A list of search terms
         num_ids: int
@@ -36,6 +35,7 @@ class SeqMining:
         """
         self.db = SeqMining._check_db(db)
         self.taxid = taxid
+        self.cname = "_".join("_".join(cname.split("-")).split(" "))
         self.terms = [" ".join(term.split()).lower() for term in terms]
         self.num_ids = num_ids
         
@@ -44,7 +44,7 @@ class SeqMining:
         Returns the string representation of the object.
         """
         class_ = self.__class__.__name__
-        return f"{class_}({self.db!r}, {self.taxid!r}, {self.terms!r}, {self.num_ids})"
+        return f"{class_}({self.db!r}, {self.taxid!r}, {self.cname!r}, {self.terms!r}, {self.num_ids})"
             
     @staticmethod
     def _check_db(db: str) -> str:
@@ -106,13 +106,9 @@ class SeqMining:
         Computes and returns the name of the .fasta file where the non-redundant DNA sequences
         are to be stored.
         """
-        # description corresponds to the first term in <self.terms>
-        descrip = self.terms[0]
-        if "-" in descrip: "_".join(descrip.split("-"))
-        if len(descrip.split()) > 1: descrip = "_".join(descrip.split())
         # construct the name of the file
-        fname = f"txid{self.taxid}_{descrip}_{self.num_ids}"
-        # check whether <fname> is the name of a file in pwd (to avoid overwriting a file)
+        fname = f"txid{self.taxid}_{self.cname}_{self.num_ids}"
+        # check whether <fname> is the name of a file in pwd (avoid collisions)
         i = 0
         while os.path.exists(f"{self.db}/{fname}{f'({i})'*bool(i)}.fasta"):
             i += 1
