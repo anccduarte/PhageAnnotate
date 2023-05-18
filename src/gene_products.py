@@ -2,14 +2,10 @@
 
 import utils
 import warnings
-from Bio import Entrez
 from tqdm.auto import tqdm
 
 # ignore Byopython warnings (SeqFeature related)
 warnings.filterwarnings("ignore")
-
-# initialize Entrez.email (receive warnings in case of excessive usage of the E-utilities)
-Entrez.email = "pg45464@alunos.uminho.pt"
 
 class GeneProducts:
     
