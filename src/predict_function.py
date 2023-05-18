@@ -28,7 +28,7 @@ class PredictFunction:
             A list of ML models
         """
         self.path = path
-        self._models = self._load_models()
+        self._models = PredictFunction._load_models()
         
     def __repr__(self) -> str:
         """
