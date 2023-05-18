@@ -7,11 +7,8 @@ from Bio import Entrez, SeqIO, Seq
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from propy import PyPro
 
-# Ignore Biopyhon warnings (related to translation)
+# Ignore Biopyhon warnings (related to sequence translation)
 warnings.filterwarnings("ignore")
-
-# initialize Entrez.email (receive warnings in case of excessive usage of the E-utilities)
-Entrez.email = "pg45464@alunos.uminho.pt"
 
 class MLDataset:
     
@@ -27,7 +24,7 @@ class MLDataset:
         Parameters
         ----------
         file: str
-            The name of the fasta file containing the DNA sequences
+            The name of the .fasta file containing the DNA sequences
         protein_name: str
             The common name of the protein coded by the DNA sequences in <file>
             
@@ -40,11 +37,7 @@ class MLDataset:
         self.file = file
         self.protein_name = protein_name
         # attributes
-        try:
-            self._translation_table = self._get_translation_table()
-        except:
-            raise ValueError(f"The taxid identifier provided in {file!r} cannot be found in "
-                             "NCBI's Taxonomy database.")
+        self._translation_table = MLDataset._get_translation_table(file, 2)
         
     def __repr__(self) -> str:
         """
@@ -53,15 +46,35 @@ class MLDataset:
         class_ = self.__class__.__name__
         return f"{class_}({self.file!r}, {self.protein_name!r})"
     
-    def _get_translation_table(self) -> str:
+    @staticmethod
+    def _get_translation_table(file: str, max_tries: int) -> str:
         """
         Returns the identifier of the translation table to be used according to the 'taxid'
         present in the string <self.file>.
+        
+        Parameters
+        ----------
+        file: str
+            The name of the .fasta file containing the DNA sequences
+        max_tries: int
+            The maximum number of tries
         """
-        taxid = self.file.split("/")[-1].split("_")[0] # accounts for dir names
-        with Entrez.efetch(db='taxonomy', id=taxid[4:], retmode='xml') as handle:
-            record = Entrez.read(handle)
-        return record[0]["GeneticCode"]["GCId"]
+        # receive warnings in case of excessive usage of the E-utilities
+        Entrez.email = "pg45464@alunos.uminho.pt"
+        # get taxonomy identifier
+        taxid = file.split("_")[0]
+        # main loop -> try to read record a maximum of <max_tries> times
+        for _ in range(max_tries):
+            try:
+                handle = Entrez.efetch(db='taxonomy', id=taxid[4:], retmode='xml')
+            except:
+                continue
+            else:
+                record = Entrez.read(handle)
+                handle.close()
+                return record[0]["GeneticCode"]["GCId"]
+        # raise error if unsuccessful
+        raise Exception(f"Unsuccessfully tried to fetch record of ID {taxid!r}.")
     
     def _translate_seq(self, seq: Seq.Seq) -> Seq.Seq:
         """
@@ -88,7 +101,8 @@ class MLDataset:
         seq: Seq.Seq
             The DNA sequence
         """
-        comp = {f"{nuc}-Nuc": round(seq.count(nuc)/len(seq), 4) for nuc in "ACGT"}
+        alphabet = "ACGT"
+        comp = {f"{nuc}-Nuc": round(seq.count(nuc)/len(seq), 4) for nuc in alphabet}
         return comp
 
     @staticmethod
