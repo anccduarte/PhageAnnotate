@@ -6,7 +6,7 @@ from sequence_mining import SeqMining
 BASE_DIR = "../sequences/"
 Path(BASE_DIR).mkdir(exist_ok=True)
 
-def get_sequences(db: str, terms: list[str], num_ids: int) -> None:
+def get_sequences(db: str, terms: dict, num_ids: int) -> None:
     """
     Wrapper function for SeqMining.
     
@@ -24,7 +24,7 @@ def get_sequences(db: str, terms: list[str], num_ids: int) -> None:
     # collect sequences
     print("---")
     for protein in terms:
-        sm = SeqMining(db=db, taxid="2731619", terms=terms[protein], num_ids=num_ids)
+        sm = SeqMining(db=db, taxid="2731619", cname=protein, terms=terms[protein], num_ids=num_ids)
         sm.get_sequences()
         print("---")
         
