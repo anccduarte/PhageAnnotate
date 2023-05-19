@@ -37,22 +37,17 @@ if __name__ == "__main__":
     
     import argparse
     
-    # initialize parser
     parser = argparse.ArgumentParser()
 
-    # add arguments
     parser.add_argument("-nfile")
     parser.add_argument("-min_occurs")
     
-    # read arguments
     args = parser.parse_args()
     nfile = args.nfile
     min_occurs = args.min_occurs
     
-    # call "filter_file"
     ninit, nfilt = filter_file(nfile=nfile, min_occurs=int(min_occurs))
     
-    # print useful information
     new_name = f"{nfile.split('.')[0]}_min_{min_occurs}.txt"
     print(f"Number of entries in {nfile!r}: {ninit}\n"
           f"Number of entries in {new_name!r}: {nfilt}")
