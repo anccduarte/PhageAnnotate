@@ -2,6 +2,7 @@
 
 import os
 import pandas as pd
+import time
 import warnings
 from Bio import Entrez, SeqIO, Seq
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
@@ -68,7 +69,7 @@ class MLDataset:
             try:
                 handle = Entrez.efetch(db='taxonomy', id=taxid[4:], retmode='xml')
             except:
-                continue
+                time.sleep(12)
             else:
                 record = Entrez.read(handle)
                 handle.close()
