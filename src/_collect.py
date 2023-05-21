@@ -215,7 +215,7 @@ if __name__ == "__main__":
     funcs = {"dna-modification": get_dna_modification,
              "dna-replication": get_dna_replication,
              "lysis": get_lysis,
-             "lysogeny_repressor": get_lysogeny_repressor,
+             "lysogeny-repressor": get_lysogeny_repressor,
              "packaging": get_packaging,
              "structural": get_structural,
              "other": get_other}

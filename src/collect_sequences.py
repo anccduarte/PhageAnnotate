@@ -154,7 +154,7 @@ class CollectSequences:
         ----------
         taxid: str
             The txid identifier of the sought-after taxa (as in NCBI's Taxonomy database;
-            only needed to name the .fasta file)
+            only needed to name the .fasta file containing non-redundant DNA sequences)
         """
         # create and open fasta file to store DNA sequences
         with open(f"{self.db}/temp.fasta", "w") as out_file:
