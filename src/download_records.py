@@ -63,7 +63,7 @@ class DownloadRecords:
             # in case of error, save message and sleep for 12 seconds
             except Exception as exc:
                 e_msgs.append((t+1, exc))
-                time.sleep(12)
+                time.sleep(60)
             # otherwise, return the handle
             else:
                 return handle
@@ -82,8 +82,9 @@ class DownloadRecords:
         max_tries: int
             The maximum number of tries
         """
-        # construct search expression
+        # construct and display search expression
         search = f"txid{self.taxid}[ORGN]"
+        print(f"NCBI search: {search}")
         # construct callable wrapping 'Entrez.esearch'
         e_util = lambda: Entrez.esearch(db=self.database,
                                         term=search,

@@ -21,11 +21,12 @@ if __name__ == "__main__":
     
     Path(base_dir).mkdir(exist_ok=True)
     
-    if taxid is None:
+    if taxid is None or num_ids is None:
         raise ValueError("<taxid> and <num_ids> have no default values.")
         
     num_recs = DownloadRecords(database=database,
                                base_dir=base_dir,
                                taxid=taxid,
                                num_ids=int(num_ids)).download(max_tries=5)
+    
     print(f"Number of records downloaded: {num_recs}")

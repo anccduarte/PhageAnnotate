@@ -2,6 +2,7 @@
 
 import os
 from Bio import SeqIO
+from tqdm.auto import tqdm
 
 def get_gene_products(path: str) -> dict:
     """
@@ -17,7 +18,7 @@ def get_gene_products(path: str) -> dict:
     # initialize dictionary for storing gene products
     gene_products = {}
     # iterate through files in the directory pointed to by <path>
-    for file in os.scandir(path):
+    for file in tqdm(os.scandir(path)):
         # guard clause 1 -> ignore files not ending in ".gb"
         if not file.name.endswith(".gb"):
             continue
