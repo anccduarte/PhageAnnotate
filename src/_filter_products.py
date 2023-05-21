@@ -46,6 +46,11 @@ if __name__ == "__main__":
     nfile = args.nfile
     min_occurs = args.min_occurs
     
+    if nfile is None or min_occurs is None:
+        e = "'nfile' and 'min_occurs' have no default values. Please, do:\n"
+            ">>> python _filter_products.py -nfile <nfile> -min_occurs <min_occurs>"
+        raise Exception(e)
+    
     ninit, nfilt = filter_file(nfile=nfile, min_occurs=int(min_occurs))
     
     new_name = f"{nfile.split('.')[0]}_min_{min_occurs}.txt"

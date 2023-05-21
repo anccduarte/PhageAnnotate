@@ -22,7 +22,8 @@ if __name__ == "__main__":
     Path(base_dir).mkdir(exist_ok=True)
     
     if taxid is None or num_ids is None:
-        raise ValueError("<taxid> and <num_ids> have no default values.")
+        raise ValueError("'taxid' and 'num_ids' have no default values. Please do:\n"
+                         ">>> python _download.py -taxid <taxid> -num_ids <num_ids>")
         
     num_recs = DownloadRecords(database=database,
                                base_dir=base_dir,

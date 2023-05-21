@@ -204,8 +204,8 @@ if __name__ == "__main__":
     class_ = args.func_class
     
     if class_ is None:
-        raise Exception("'func_class' has no default values. Please, do:\n"
-                        ">>> python collect_seqs.py -func_class <func_class>")
+        raise Exception("'func_class' has no default value. Please, do:\n"
+                        ">>> python _collect.py -func_class <func_class>")
     
     options = ["dna-modification", "dna-replication", "lysis", "lysogeny-repressor", "packaging",
                "structural", "other"]
