@@ -55,23 +55,16 @@ class CollectSequences:
     
     def _validate_product(self, product: str) -> bool:
         """
-        Verifies the validity of <product>. <product> is not valid if:
-        - all terms provided by the user are distinct from "product"
-        - OR some term in ["not", "non"] is a substring of "product"
+        Verifies the validity of <product> (<product> is valid if and only if there is
+        a term in the list of terms provided by the user that exactly matches it).
         
         Parameters
         ----------
         product: str
             A protein product coded by a given DNA sequence
         """
-        # check whether any term is self.terms is equal to "product"
-        if all(term != product for term in self.terms):
-            return False
-        # check whether "not" or "non" is in "product"
-        if any(term in product for term in ["not", "non"]):
-            return False
-        # checks passed -> "product" is valid
-        return True
+        # check if any term in <self.terms> is equal to <product>
+        return any(term == product for term in self.terms)
     
     @staticmethod
     def _get_sequence(record: SeqRecord, feature: SeqFeature) -> SeqRecord:
