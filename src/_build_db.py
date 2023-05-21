@@ -12,10 +12,13 @@ if __name__ == "__main__":
     Path(database).mkdir(exist_ok=True)
 
     # directories where the DNA sequences are stored
-    directories = {"structural": "structural",
+    directories = {"dna_modification": "dna-modification",
+                   "dna_replication": "dna-replication",
                    "lysis": "lysis",
-                   "modification_replication": "modification-replication",
-                   "packaging": "packaging"}
+                   "lysogeny_repressor": "lysogeny-repressor",
+                   "packaging": "packaging",
+                   "structural": "structural",
+                   "other": "other"}
 
     # initialize df for all functional classes
     df_all = pd.DataFrame()
@@ -24,11 +27,10 @@ if __name__ == "__main__":
     to_add = []
 
     # main loop -> iterate through "directories"
-    for dir_ in directories:
+    for i, dir_ in enumerate(directories):
         # get functional class
         func_class = directories[dir_]
-        # log "state" of the program to console
-        print(f"Building dataset of {func_class!r} proteins...", end=" ")
+        print(f"Building dataset of {func_class!r} proteins...")
         # change current working directory to "dir_"
         os.chdir(f"../sequences/{dir_}")
         # initialize df for specific functional class
@@ -43,7 +45,8 @@ if __name__ == "__main__":
             if not n_file.endswith("fasta"):
                 continue
             # get name of the protein coded by the DNA sequences in "file"
-            _, *temp, _ = n_file.split("_")
+            _, *temp = n_file.split("_")
+            temp[-1] = temp[-1].split(".")[0]
             prot_name = "-".join(temp)
             # featurize DNA sequences in "file"
             df = MLDataset(n_file, prot_name).build_dataset()
@@ -52,14 +55,16 @@ if __name__ == "__main__":
             # concat "df" to "df_class" and "df_all"
             df_class = pd.concat([df_class, df])
             df_all = pd.concat([df_all, df])
+            print(f"- Added {prot_name!r} sequences")
         # go back to the parent directory ("sequences")
         os.chdir("..")
         # save "df_class" in the directory "database"
         df_class.to_csv(f"{database}/{dir_}.csv")
         # update "to_add" with the name of the functional class
         to_add += [func_class] * counter
-        # log to console when construction of the dataset is finished
-        print("DONE")
+        # separate logs of different functional classes
+        if i < len(directories)-1:
+            print("---")
 
     # delete column with protein names from "df_all"
     del df_all["Function"]

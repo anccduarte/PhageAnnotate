@@ -43,7 +43,7 @@ def build_model_and_display_stats(file_name: str) -> None:
     precision = precision_score(y_test, y_pred, average="macro")
     recall = recall_score(y_test, y_pred, average="macro")
     print(f"Metrics on testing data ('{file_name}'):\n"
-          f"- {accuracy=:.2%}\n- {precision=:.2%}\n- {recall=:.2%}")
+          f"- {accuracy = :.2%}\n- {precision = :.2%}\n- {recall = :.2%}")
     
     
 if __name__ == "__main__":
@@ -51,13 +51,16 @@ if __name__ == "__main__":
     Path("../models").mkdir(exist_ok=True)
     
     datasets = ("all",
+                "dna_modification",
+                "dna_replication",
                 "lysis",
-                "modification_replication",
+                "lysogeny_repressor",
                 "packaging",
-                "structural")
+                "structural",
+                "other")
     
     print("---")
-    for dataset in datasets:
-        build_model_and_display_stats(dataset)
+    for fname in datasets:
+        build_model_and_display_stats(file_name=fname)
         print("---")
         

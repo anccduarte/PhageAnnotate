@@ -43,10 +43,13 @@ class PredictFunction:
         Loads and returns the HGBR models in 'models'.
         """
         models = ("all",
-                  "lysis",
-                  "modification_replication",
-                  "packaging",
-                  "structural")
+                 "dna_modification",
+                 "dna_replication",
+                 "lysis",
+                 "lysogeny_repressor",
+                 "packaging",
+                 "structural",
+                 "other")
         out = []
         for model in models:
             out.append(joblib.load(f"../models/{model}.joblib"))
@@ -84,19 +87,22 @@ class PredictFunction:
         # get featurized dataset
         X = self._get_dataset()
         # get models
-        MODEL_ALL, MODEL_LYSIS, MODEL_MOD_REP, MODEL_PACK, MODEL_STRUCT = self._models
+        ALL, MOD, REP, LYSIS, LYS_REP, PACK, STRUCT, OTHER = self._models
         # predict functional class
-        preds_func_class = MODEL_ALL.predict(X)
+        preds_func_class = ALL.predict(X)
         # predict function
         preds_func = []
         # iterate through rows of <X>
         for i, vec in X.iterrows():
             # get appropriate model
             func_class = preds_func_class[i]
-            if func_class == "lysis": model = MODEL_LYSIS
-            elif func_class == "modification-replication": model = MODEL_MOD_REP
-            elif func_class == "packaging": model = MODEL_PACK
-            elif func_class == "structural": model = MODEL_STRUCT
+            if func_class == "dna-modification": model = MOD
+            elif func_class == "dna-replication": model = REP
+            elif func_class == "lysis": model = LYSIS
+            elif func_class == "lysogeny-repressor": model = LYS_REP
+            elif func_class == "packaging": model = PACK
+            elif func_class == "structural": model = STRUCT
+            elif func_class == "other": model = OTHER
             # predict and save
             vec = np.array(vec).reshape(1,-1)
             preds_func.append(model.predict(vec)[0])
