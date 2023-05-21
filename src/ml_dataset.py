@@ -62,8 +62,8 @@ class MLDataset:
         """
         # receive warnings in case of excessive usage of the E-utilities
         Entrez.email = "pg45464@alunos.uminho.pt"
-        # get taxonomy identifier
-        taxid = file.split("_")[0]
+        # get taxonomy identifier (accounts for dir names)
+        taxid = file.split("/")[-1].split("_")[0]
         # main loop -> try to read record a maximum of <max_tries> times
         for _ in range(max_tries):
             try:
@@ -90,55 +90,81 @@ class MLDataset:
         while len(seq) % 3 != 0: seq = f"N{seq}"
         tseq = Seq.Seq(seq).translate(table=self._translation_table)[:-1]
         return tseq
+    
+    @staticmethod
+    def _get_valid_protein(seq: Seq.Seq) -> Seq.Seq:
+        """
+        Returns a valid protein sequence from the sequence it takes as input (substitutes
+        invalid characters for the empty string).
+        
+        Parameters
+        ----------
+        seq: Seq.Seq
+            The protein sequence to be validated
+        """
+        problematic = ("*", "B", "J", "O", "U", "W", "X", "Z")
+        for c in problematic:
+            seq = seq.replace(c, "")
+        return seq
         
     @staticmethod
-    def _nuc_composition(seq: Seq.Seq) -> list:
+    def _nuc_composition(seq: Seq.Seq) -> dict:
         """
-        Returns a list containing the relative frequencies of each nucleotide in a DNA
-        sequence.
+        Returns a dictionary containing the relative frequencies of each nucleotide in
+        a DNA sequence.
 
         Parameters
         ----------
         seq: Seq.Seq
             The DNA sequence
         """
-        alphabet = "ACGT"
-        comp = {f"{nuc}-Nuc": round(seq.count(nuc)/len(seq), 4) for nuc in alphabet}
-        return comp
+        return {f"{nuc}-Nuc": seq.count(nuc)/len(seq) for nuc in "ACGT"}
 
     @staticmethod
-    def _amino_composition(seq: Seq.Seq) -> list:
+    def _amino_composition(seq: Seq.Seq) -> dict:
         """
-        Returns a list containing the relative frequencies of each aminoacid in a protein
-        sequence.
+        Returns a dictionary containing the relative frequencies of each aminoacid in
+        a protein sequence.
 
         Parameters
         ----------
         seq: Seq.Seq
             The protein sequence
         """
-        alphabet = "ACDEFGHIKLMNPQRSTVWY"
-        comp = {f"{a}-Amino": round(seq.count(a)/len(seq), 4) for a in alphabet}
-        return comp
+        amino_comp = PyPro.GetProDes(seq).GetAAComp()
+        return {f"{a}-Amino": val for (a, val) in amino_comp.items()}
     
     @staticmethod
-    def _dipeptide_composition(seq: Seq.Seq) -> list:
+    def _dipeptide_composition(seq: Seq.Seq) -> dict:
         """
-        Returns the dipeptide composition of the protein sequence.
+        Returns a dictionary containing the dipeptide composition of the protein sequence
+        it takes as input.
         
         Parameters
         ----------
         seq: Seq.Seq
             The protein sequence
         """
-        DesObject = PyPro.GetProDes(seq)
-        return DesObject.GetDPComp()
+        dipept_comp = PyPro.GetProDes(seq).GetDPComp()
+        return {f"{di}-Dipept": val for (di, val) in dipept_comp.items()}
     
     @staticmethod
-    def _aromaticity(seq: Seq.Seq) -> list:
+    def _molecular_weight(seq: Seq.Seq) -> dict:
         """
-        Returns a list containing the value of the protein's aromaticity (sum of the
-        relative frequencies of the aminoacids phenylalanine (F), tyrosine (Y) and
+        Returns a dictionary containing the value of the protein's molecular weight.
+        
+        Parameters
+        ----------
+        seq: Seq.Seq
+            The protein sequence
+        """
+        return {"Molecular-Weight": ProteinAnalysis(seq).molecular_weight()}
+    
+    @staticmethod
+    def _aromaticity(seq: Seq.Seq) -> dict:
+        """
+        Returns a dictionary containing the value of the protein's aromaticity (sum of
+        the relative frequencies of the aminoacids phenylalanine (F), tyrosine (Y) and
         tryptophan (W)).
         
         Parameters
@@ -146,27 +172,51 @@ class MLDataset:
         seq: Seq.Seq
             The protein sequence
         """
-        arom = sum([(seq.count(amino)/len(seq)) for amino in "FYW"])
-        return {"Aromaticity": round(arom, 4)}
+        return {"Aromaticity": ProteinAnalysis(seq).aromaticity()}
     
     @staticmethod
-    def _isoelectric_point(seq: Seq.Seq) -> list:
+    def _instability_index(seq: Seq.Seq) -> dict:
         """
-        Returns a list containing the value of the protein's isoelectric point.
+        Returns a dictionary containing the value of the protein's instability index.
         
         Parameters
         ----------
         seq: Seq.Seq
             The protein sequence
         """
-        X = ProteinAnalysis(str(seq))
-        return {"Isoelectric": round(X.isoelectric_point(), 4)}
+        return {"Instability-Index": ProteinAnalysis(seq).instability_index()}
     
     @staticmethod
-    def _secondary_structure_fraction(seq: Seq.Seq) -> list:
+    def _isoelectric_point(seq: Seq.Seq) -> dict:
         """
-        Returns a list containing the fraction of amino acids which tend to be in the
-        secondary structures:
+        Returns a dictionary containing the value of the protein's isoelectric point.
+        
+        Parameters
+        ----------
+        seq: Seq.Seq
+            The protein sequence
+        """
+        return {"Isoelectric-Point": ProteinAnalysis(seq).isoelectric_point()}
+    
+    @staticmethod
+    def _molar_extinction_coefficient(seq: Seq.Seq) -> dict:
+        """
+        Returns a dictionary containing the value of the protein's molar extinction
+        coefficient (reduced and oxidized).
+        
+        Parameters
+        ----------
+        seq: Seq.Seq
+            The protein sequence
+        """
+        reduced, oxidized = ProteinAnalysis(seq).molar_extinction_coefficient()
+        return {"Reduced-MEC": reduced, "Oxidized-MEC": oxidized}
+    
+    @staticmethod
+    def _secondary_structure_fraction(seq: Seq.Seq) -> dict:
+        """
+        Returns a dictionary containing the fraction of amino acids which tend to be
+        in the secondary structures:
         - alpha-helix: Val (V), Ile (I), Tyr (Y), Phe (F), Trp (W), Leu (L)
         - beta-turn: Asn (N), Pro (P), Gly (G), Ser (S)
         - beta-sheet: Glu (E), Met (M), Ala (A), Leu (L)
@@ -176,25 +226,60 @@ class MLDataset:
         seq: Seq.Seq
             The protein sequence
         """
-        helix = round(sum([(seq.count(amino)/len(seq)) for amino in "VIYFWL"]), 4)
-        turn = round(sum([(seq.count(amino)/len(seq)) for amino in "NPGS"]), 4)
-        sheet = round(sum([(seq.count(amino)/len(seq)) for amino in "EMAL"]), 4)
-        ssf = {"A-Helix": helix, "B-turn": turn, "B-sheet": sheet}
-        return ssf
+        helix, turn, sheet = ProteinAnalysis(seq).secondary_structure_fraction()
+        return {"Helix-SSF": helix, "Turn-SSF": turn, "Sheet-SSf": sheet}
     
     @staticmethod
-    def _ctd_descriptors(seq: Seq.Seq) -> list:
+    def _ctd_descriptors(seq: Seq.Seq) -> dict:
         """
-        Returns a list containing the CTD descriptors (composition, transition, distribution)
-        of the protein sequence.
+        Returns a dictionary containing the CTD descriptors (composition, transition,
+        distribution) of the protein sequence.
         
         Parameters
         ----------
         seq: Seq.Seq
             The protein sequence
         """
-        DesObject = PyPro.GetProDes(seq)
-        return DesObject.GetCTD()
+        return PyPro.GetProDes(seq).GetCTD()
+    
+    @staticmethod
+    def _geary_autocorrelation(seq: Seq.Seq) -> dict:
+        """
+        Returns a dictionary containing the Geary autocorrelation descriptors of the
+        protein sequence it takes as input.
+        
+        Parameters
+        ----------
+        seq: Seq.Seq
+            The protein sequence
+        """
+        return PyPro.GetProDes(seq).GetGearyAuto()
+    
+    @staticmethod
+    def _moran_autocorrelation(seq: Seq.Seq) -> dict:
+        """
+        Returns a dictionary containing the Moran autocorrelation descriptors of the
+        protein sequence it takes as input.
+        
+        Parameters
+        ----------
+        seq: Seq.Seq
+            The protein sequence
+        """
+        return PyPro.GetProDes(seq).GetMoranAuto()
+    
+    @staticmethod
+    def _moreau_broto_autocorrelation(seq: Seq.Seq) -> dict:
+        """
+        Returns a dictionary containing the Moreau-Broto autocorrelation descriptors of
+        the protein sequence it takes as input.
+        
+        Parameters
+        ----------
+        seq: Seq.Seq
+            The protein sequence
+        """
+        return PyPro.GetProDes(seq).GetMoreauBrotoAuto()
 
     def build_dataset(self) -> pd.DataFrame:
         """
@@ -202,12 +287,15 @@ class MLDataset:
         sequences (present in <file>).
         ---
         Feature mapping:
-        - sequence length (1 feature), nucleotide composition (4 features), dipeptide
-        composition (400 features), aminoacid composition (20 features), aromaticity (1
-        feature), isoelectric point (1 feature), secondary structure fraction (3 features),
-        ctd descriptors (147 features)
+        - sequence length (1 feature), nucleotide composition (4 features), aminoacid
+        composition (20 features), dipeptide composition (400 features), molecular weight
+        (1 feature), aromaticity (1 feature), instability index (1 feature), isoelectric
+        point (1 feature), molar extinctioncoefficient (2 features), secondary structure
+        fraction (3 features), ctd descriptors (147 features), geary autocorrelation
+        descriptors (240 features), moran autocorrelation descriptors (240 features),
+        moreau-broto autocorrelation descriptors (240 features)
         ---
-        Total number of features: 577
+        Total number of features: 1301
         """
         # initialize dataset
         dataset = []
@@ -217,23 +305,29 @@ class MLDataset:
         for i, seq in enumerate(sequences):
             # translate DNA sequence
             tseq = self._translate_seq(seq.seq)
-            # get sequence descriptors
-            len_ = {"Len-Prot": len(tseq)}
-            nuc = MLDataset._nuc_composition(seq.seq)
-            amino = MLDataset._amino_composition(tseq)
-            dipep = MLDataset._dipeptide_composition(tseq)
-            arom = MLDataset._aromaticity(tseq)
-            isoel = MLDataset._isoelectric_point(tseq)
-            ssf = MLDataset._secondary_structure_fraction(tseq)
-            ctd = MLDataset._ctd_descriptors(tseq)
-            # build entry and append it to "features"
-            entry = {**len_, **nuc, **amino, **dipep, **arom, **isoel, **ssf, **ctd}
+            # probably temporary
+            tseq = MLDataset._get_valid_protein(tseq)
+            # build entry by computing sequence descriptors
+            entry = {"Len-Protein": len(tseq),
+                     **MLDataset._nuc_composition(seq.seq),
+                     **MLDataset._amino_composition(tseq),
+                     **MLDataset._dipeptide_composition(tseq),
+                     **MLDataset._molecular_weight(tseq),
+                     **MLDataset._aromaticity(tseq),
+                     **MLDataset._instability_index(tseq),
+                     **MLDataset._isoelectric_point(tseq),
+                     **MLDataset._molar_extinction_coefficient(tseq),
+                     **MLDataset._secondary_structure_fraction(tseq),
+                     **MLDataset._ctd_descriptors(tseq)} #,
+                     #**MLDataset._geary_autocorrelation(tseq),
+                     #**MLDataset._moran_autocorrelation(tseq),
+                     #**MLDataset._moreau_broto_autocorrelation(tseq)}
+            # add "entry" to "dataset"
             dataset.append(entry)
         # build pd.DataFrame from "dataset"
-        df = pd.DataFrame(dataset)
+        df_out = pd.DataFrame(dataset)
         # add label column to the dataframe
-        label_col = [self.protein_name] * (i+1)
-        df["Function"] = label_col
+        df_out["Function"] = [self.protein_name] * (i+1)
         # return df containing the featurized records
-        return df
+        return df_out
         
