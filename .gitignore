@@ -1,10 +1,23 @@
-# files
+# FILES
+# ---
 .DS_Store
 
-# folders
-.ipynb_checkpoints
-bin
-experimental
-genomes
-__pycache__
-test_1st
+# FOLDERS
+# ---
+# permanent
+# ---
+.ipynb_checkpoints/
+bin/
+experimental/
+genomes/
+__pycache__/
+test_1st/
+# ---
+# temporary
+# ---
+database/
+gene_products/
+models/
+records/
+results/
+sequences/
