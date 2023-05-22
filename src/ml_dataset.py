@@ -18,7 +18,7 @@ class MLDataset:
     the DNA sequences present in the input .fasta file.
     """
     
-    def __init__(self, file: str, protein_name: str) -> None:
+    def __init__(self, file: str, prot_name: str, ttable: str, icodons: tuple) -> None:
         """
         Initializes an instance of MLDataset.
         
@@ -26,69 +26,45 @@ class MLDataset:
         ----------
         file: str
             The name of the .fasta file containing the DNA sequences
-        protein_name: str
+        prot_name: str
             The common name of the protein coded by the DNA sequences in <file>
-            
-        Attributes
-        ----------
-        _translation_table: str
-            The identifier of the translation table used by the taxid in <file>
+        ttable: str
+            The identifier of the translation table to be used
+        icodons: tuple
+            A tuple of possible initiation codons given the table <ttable>
         """
         # parameters
         self.file = file
-        self.protein_name = protein_name
-        # attributes
-        self._translation_table = MLDataset._get_translation_table(file, 2)
+        self.prot_name = prot_name
+        self.ttable = ttable
+        self.icodons = icodons
         
     def __repr__(self) -> str:
         """
         Returns the string representation of the object.
         """
-        class_ = self.__class__.__name__
-        return f"{class_}({self.file!r}, {self.protein_name!r})"
-    
-    @staticmethod
-    def _get_translation_table(file: str, max_tries: int) -> str:
-        """
-        Returns the identifier of the translation table to be used according to the 'taxid'
-        present in the string <self.file>.
-        
-        Parameters
-        ----------
-        file: str
-            The name of the .fasta file containing the DNA sequences
-        max_tries: int
-            The maximum number of tries
-        """
-        # receive warnings in case of excessive usage of the E-utilities
-        Entrez.email = "pg45464@alunos.uminho.pt"
-        # get taxonomy identifier (accounts for dir names)
-        taxid = file.split("/")[-1].split("_")[0]
-        # main loop -> try to read record a maximum of <max_tries> times
-        for _ in range(max_tries):
-            try:
-                handle = Entrez.efetch(db='taxonomy', id=taxid[4:], retmode='xml')
-            except:
-                time.sleep(12)
-            else:
-                record = Entrez.read(handle)
-                handle.close()
-                return record[0]["GeneticCode"]["GCId"]
-        # raise error if unsuccessful
-        raise Exception(f"Unsuccessfully tried to fetch record of ID {taxid!r}.")
+        c = self.__class__.__name__
+        r = f"{c}({self.file!r}, {self.prot_name!r}, {self.ttable!r}, {self.icodons!r})"
+        return r
     
     def _translate_seq(self, seq: Seq.Seq) -> Seq.Seq:
         """
-        Translates the DNA sequence it takes as input (according to <_translation_table>)
-        and returns the corresponding sequence of aminoacids.
+        Translates the DNA sequence it takes as input (according to <self.ttable>) and
+        returns the corresponding sequence of aminoacids.
         
         Parameters
         ----------
         seq: Seq.Seq
             The DNA sequence
         """
-        while len(seq) % 3 != 0: seq = f"N{seq}"
-        tseq = Seq.Seq(seq).translate(table=self._translation_table)[:-1]
+        valid = lambda s: len(s) % 3 == 0
+        if len(seq) % 3 != 0:
+            icodon = seq[:3]
+            if icodon in self.icodons:
+                while not valid(seq): seq = f"{seq}N"
+            else:
+                while not valid(seq): seq = f"N{seq}"
+        tseq = Seq.Seq(seq).translate(table=self.ttable)[:-1]
         return tseq
     
     @staticmethod
@@ -102,8 +78,8 @@ class MLDataset:
         seq: Seq.Seq
             The protein sequence to be validated
         """
-        problematic = ("*", "B", "J", "O", "U", "W", "X", "Z")
-        for c in problematic:
+        invalid_chars = "*BJOUWXZ"
+        for c in invalid_chars:
             seq = seq.replace(c, "")
         return seq
         
@@ -305,7 +281,7 @@ class MLDataset:
         for i, seq in enumerate(sequences):
             # translate DNA sequence
             tseq = self._translate_seq(seq.seq)
-            # probably temporary
+            # probably temporary -> get rid of unwanted symbols in the sequence
             tseq = MLDataset._get_valid_protein(tseq)
             # build entry by computing sequence descriptors
             entry = {"Len-Protein": len(tseq),
@@ -327,7 +303,7 @@ class MLDataset:
         # build pd.DataFrame from "dataset"
         df_out = pd.DataFrame(dataset)
         # add label column to the dataframe
-        df_out["Function"] = [self.protein_name] * (i+1)
+        df_out["Function"] = [self.prot_name] * (i+1)
         # return df containing the featurized records
         return df_out
         
