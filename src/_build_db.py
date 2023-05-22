@@ -26,7 +26,7 @@ def get_protein_name(nfile: str) -> str:
     temp[-1] = temp[-1].split(".")[0]
     return "-".join(temp)
 
-def build_df_from_dir(dir_: str) -> pd.DataFrame:
+def build_df_from_dir(dir_: str, ttable: str, icodons: tuple) -> pd.DataFrame:
     """
     Constructs and returns a pd.DataFrame containing a featurized version
     of the sequences present in the directory "../sequences/<dir_>".
@@ -35,8 +35,13 @@ def build_df_from_dir(dir_: str) -> pd.DataFrame:
     ----------
     dir_: str
         The subdirectory containing the sequences
+    ttable: str
+        The identifier of the translation table to be used
+    icodons: tuple
+        A tuple of possible initiation codons given the table <ttable>
+
     """
-    # allow to mutate "DF_ALL"
+    # permit mutations in "DF_ALL"
     global DF_ALL
     # initialize df for functional class
     df_class = pd.DataFrame()
@@ -49,7 +54,9 @@ def build_df_from_dir(dir_: str) -> pd.DataFrame:
         prot_name = get_protein_name(nfile=file.name)
         # featurize DNA sequences in <file>
         df = MLDataset(file=f"../sequences/{dir_}/{file.name}",
-                       protein_name=prot_name).build_dataset()
+                       prot_name=prot_name,
+                       ttable=ttable,
+                       icodons=icodons).build_dataset()
         # concat "df" to "df_class" and "df_all"
         df_class = pd.concat([df_class, df])
         DF_ALL = pd.concat([DF_ALL, df])
@@ -57,7 +64,7 @@ def build_df_from_dir(dir_: str) -> pd.DataFrame:
     # return "df_class"
     return df_class
         
-def build_dbs(dirs: dict) -> None:
+def build_dbs(dirs: dict, ttable: str, icodons: tuple) -> None:
     """
     Constructs pd.DataFrames containing featurized versions of the
     sequences present in the directories <dirs>, and saves them to .csv
@@ -68,15 +75,19 @@ def build_dbs(dirs: dict) -> None:
     dirs: dict
         Dictionary containing the names of the directories where the DNA
         sequences to be featurized are stored
+    ttable: str
+        The identifier of the translation table to be used
+    icodons: tuple
+        A tuple of possible initiation codons given the table <ttable>
     """
-    # allow to mutate "TO_ADD"
+    # permit mutations in "TO_ADD"
     global TO_ADD
     # main loop -> iterate through directories
     for dir_ in dirs:
         func_class = dirs[dir_]
         print(f"Building dataset of {func_class!r} proteins...")
         # build dataframe (featurized sequences in <dir_>)
-        df_class = build_df_from_dir(dir_=dir_)
+        df_class = build_df_from_dir(dir_, ttable, icodons)
         # save "df_class" to a .csv file
         df_class.to_csv(f"{DATABASE}/{dir_}.csv")
         # update "to_add" with the name of the functional class
@@ -96,8 +107,11 @@ if __name__ == "__main__":
                    "structural": "structural",
                    "other": "other"}
     
+    # tuple of initiation codons for translation table 11
+    icodons = ("TTG", "CTG", "ATT", "ATC", "ATA", "ATG", "GTG")
+    
     # build databases
-    build_dbs(dirs=directories)
+    build_dbs(dirs=directories, ttable="11", icodons=icodons)
     
     # delete column with protein names from "DF_ALL"
     del DF_ALL["Function"]
