@@ -57,7 +57,7 @@ class DownloadRecords:
         e_msgs = []
         # main loop -> try get record a maximum of <max_tries> times
         for t in range(max_tries):
-            # try calling 'e_util' and assign to 'handle'
+            # try calling 'e_util' (lazily evaluated) and assign to 'handle'
             try:
                 handle = e_util()
             # in case of error, save message and sleep for 12 seconds
@@ -85,7 +85,7 @@ class DownloadRecords:
         # construct and display search expression
         search = f"txid{self.taxid}[ORGN]"
         print(f"NCBI search: {search}")
-        # construct callable wrapping 'Entrez.esearch'
+        # construct callable wrapping 'Entrez.esearch' (lazy evaluation)
         e_util = lambda: Entrez.esearch(db=self.database,
                                         term=search,
                                         retmax=self.num_ids)
@@ -107,7 +107,7 @@ class DownloadRecords:
         max_tries: int
             The maximum number of tries
         """
-        # construct callable wrapping 'Entrez.efetch'
+        # construct callable wrapping 'Entrez.efetch' (lazy evaluation)
         e_util = lambda: Entrez.efetch(db=self.database,
                                        id=id_,
                                        rettype="gb",
