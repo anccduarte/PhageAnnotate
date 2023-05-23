@@ -7,17 +7,18 @@
 # permanent
 # ---
 .ipynb_checkpoints/
+__pycache__/
 bin/
 experimental/
+gene_products/
 genomes/
-__pycache__/
+records/
 test_1st/
+test_2nd/
 # ---
 # temporary
 # ---
 database/
-gene_products/
 models/
-records/
 results/
 sequences/
