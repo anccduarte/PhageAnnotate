@@ -57,7 +57,7 @@ def get_dna_modification() -> None:
                              "adenine specific dna methyltransferase", "transferase"],
              "phosphohydrolase": ["nucleoside triphosphate pyrophosphohydrolase", "phosphohydrolase"],
              "glutaredoxin": ["glutaredoxin"],
-             "chromatin remodeling complex atpase": ["chromatin remodeling complex atpase"],
+             "chromatin remodeling complex ATPase": ["chromatin remodeling complex atpase"],
              "ribonuclease": ["endodeoxyribonuclease i", "endodeoxyribonuclease rusa", "endodeoxyribonuclease",
                               "ribonuclease"],
              "restriction alleviation protein": ["restriction alleviation protein"]}

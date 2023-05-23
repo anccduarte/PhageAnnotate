@@ -39,7 +39,6 @@ def build_df_from_dir(dir_: str, ttable: str, icodons: tuple) -> pd.DataFrame:
         The identifier of the translation table to be used
     icodons: tuple
         A tuple of possible initiation codons given the table <ttable>
-
     """
     # permit mutations in "DF_ALL"
     global DF_ALL
