@@ -13,6 +13,10 @@ class PredictFunction:
     contained in the .fasta file pointed to by <path>.
     """
     
+    # initialize class variable (all instances of PredictFunction share it)
+    DATASETS = ("all", "dna-modification", "dna-replication", "lysis",
+                "lysogeny-repressor", "packaging", "structural", "other")
+    
     def __init__(self, path: str, ttable: str, icodons: tuple) -> None:
         """
         Initializes an instance of PredictFunction.
@@ -28,13 +32,23 @@ class PredictFunction:
             
         Attributes
         ----------
-        _models: list
-            A list of ML models
+        _models: dict
+            A dictionary of ML models
+        _scalers: dict
+            A dictionary of scaler objects
+        _support_vecs: dict
+            A dictionary of support vectors (feature selection)
         """
+        # parameters
         self.path = path
         self.ttable = ttable
         self.icodons = icodons
-        self._models = PredictFunction._load_models()
+        # attributes
+        DATASETS = PredictFunction.DATASETS
+        models, scalers, support_vecs = PredictFunction._load()
+        self._models = {ds: mo for (ds, mo) in zip(DATASETS, models)}
+        self._scalers = {ds: sc for (ds, sc) in zip(DATASETS, scalers)}
+        self._support_vecs = {ds: sp for (ds, sp) in zip(DATASETS, support_vecs)}
         
     def __repr__(self) -> str:
         """
@@ -44,22 +58,18 @@ class PredictFunction:
         return f"{class_}({self.path!r})"
         
     @staticmethod
-    def _load_models() -> list:
+    def _load() -> tuple:
         """
-        Loads and returns the HGBR models in 'models'.
+        Loads and returns the models, scalers and support vectors corresponding to
+        each dataset in "DATASETS".
         """
-        models = ("all",
-                 "dna_modification",
-                 "dna_replication",
-                 "lysis",
-                 "lysogeny_repressor",
-                 "packaging",
-                 "structural",
-                 "other")
-        out = []
-        for model in models:
-            out.append(joblib.load(f"../models/{model}.joblib"))
-        return out
+        models, scalers, support_vecs = [], [], []
+        for ds in PredictFunction.DATASETS:
+            name_ds = "_".join(ds.split("-"))
+            models.append(joblib.load(f"../models/{name_ds}.joblib"))
+            scalers.append(joblib.load(f"../models/{name_ds}_scaler.joblib"))
+            support_vecs.append(joblib.load(f"../models/{name_ds}_support.joblib"))
+        return models, scalers, support_vecs
 
     def _get_dataset(self) -> pd.DataFrame:
         """
@@ -89,47 +99,30 @@ class PredictFunction:
     def _predict(self) -> tuple:
         """
         Predicts the functional class and function associated to each feature vector
-        in <X> (each representing a DNA sequence). Returns a tuple of two lists
+        in <X_pred> (each representing a DNA sequence). Returns a tuple of two lists
         containing the predictions.
         """
         # get featurized dataset
-        X = self._get_dataset()
-        # load scaler used to scale features in "all.csv"
-        scaler_all = joblib.load("../models/all_scaler.joblib")
-        # get models
-        ALL, MOD, REP, LYSIS, LYS_REP, PACK, STRUCT, OTHER = self._models
+        X_pred = self._get_dataset()
+        # load model, scaler and support vector for "all.csv"
+        model_all = self._models["all"]
+        scaler_all = self._scalers["all"]
+        support_all = self._support_vecs["all"]
         # predict functional class
-        preds_func_class = ALL.predict(scaler_all.transform(X))
-        # initialize empty list to store predicted functions
+        X_all = scaler_all.transform(X_pred)[:, support_all]
+        preds_func_class = model_all.predict(X_all)
+        # iterate through rows of <X>, predict function and save prediction
         preds_func = []
-        # iterate through rows of <X> and predict function
-        for i, vec in X.iterrows():
-            # get appropriate model and load scaler
+        for i, vec in X_pred.iterrows():
+            # get/load appropriate model, scaler and feature suppport
             func_class = preds_func_class[i]
-            if func_class == "dna-modification":
-                model = MOD
-                scaler = joblib.load("../models/dna_modification_scaler.joblib")
-            elif func_class == "dna-replication":
-                model = REP
-                scaler = joblib.load("../models/dna_replication_scaler.joblib")
-            elif func_class == "lysis":
-                model = LYSIS
-                scaler = joblib.load("../models/lysis_scaler.joblib")
-            elif func_class == "lysogeny-repressor":
-                model = LYS_REP
-                scaler = joblib.load("../models/lysogeny_repressor_scaler.joblib")
-            elif func_class == "packaging":
-                model = PACK
-                scaler = joblib.load("../models/packaging_scaler.joblib")
-            elif func_class == "structural":
-                model = STRUCT
-                scaler = joblib.load("../models/structural_scaler.joblib")
-            elif func_class == "other":
-                model = OTHER
-                scaler = joblib.load("../models/other_scaler.joblib")
+            model = self._models[func_class]
+            scaler = self._scalers[func_class]
+            support = self._support_vecs[func_class]
             # predict and save
             vec = np.array(vec).reshape(1,-1)
-            preds_func.append(model.predict(scaler.transform(vec))[0])
+            X_vec = scaler.transform(vec)[:, support]
+            preds_func.append(model.predict(X_vec)[0])
         # return predictions
         return preds_func_class, preds_func
 
