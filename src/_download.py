@@ -2,18 +2,15 @@
 
 if __name__ == "__main__":
     
-    import argparse
+    import utils
     from download_records import DownloadRecords
     from pathlib import Path
+        
+    args = utils.get_args(("-database", "nucleotide"),
+                          ("-base_dir", "../records"),
+                          ("-taxid",),
+                          ("-num_ids",))
     
-    parser = argparse.ArgumentParser()
-    
-    parser.add_argument("-database", default="nucleotide")
-    parser.add_argument("-base_dir", default="../records")
-    parser.add_argument("-taxid")
-    parser.add_argument("-num_ids")
-    
-    args = parser.parse_args()
     database = args.database
     base_dir = args.base_dir
     taxid = args.taxid # 28883 OR 2731619

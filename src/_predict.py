@@ -2,21 +2,15 @@
 
 if __name__ == "__main__":
     
-    import argparse
+    import utils
     from pathlib import Path
     from predict_function import PredictFunction
     
     # create "results" directory (if not already created)
     Path("../results").mkdir(exist_ok=True)
     
-    # initialize parser
-    parser = argparse.ArgumentParser()
-    
-    # add argument
-    parser.add_argument("-path")
-    
-    # read arguments
-    args = parser.parse_args()
+    # read arguments (sys.argv)
+    args = utils.get_args(("-path",))
     path = args.path
     
     # remaining arguments

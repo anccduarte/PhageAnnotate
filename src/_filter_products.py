@@ -35,14 +35,11 @@ def filter_file(nfile: str, min_occurs: int) -> tuple:
 
 if __name__ == "__main__":
     
-    import argparse
+    import utils
     
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("-nfile")
-    parser.add_argument("-min_occurs")
+    args = utils.get_args(("-nfile",),
+                          ("-min_occurs",))
     
-    args = parser.parse_args()
     nfile = args.nfile
     min_occurs = args.min_occurs
     

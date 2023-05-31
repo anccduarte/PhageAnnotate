@@ -63,16 +63,13 @@ def build_txt(fname: str) -> int:
 
 if __name__ == "__main__":
     
-    import argparse
+    import utils
     from pathlib import Path
     
     Path("../gene_products").mkdir(exist_ok=True)
     
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-fname", default="test")
-    args = parser.parse_args()
-    fname = args.fname
+    args = utils.get_args(("-fname", "test"))
         
-    num = build_txt(fname=fname)
+    num = build_txt(fname=args.fname)
     print(f"Number of distinct names: {num}")
     
