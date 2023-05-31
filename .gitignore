@@ -13,6 +13,8 @@ experimental/
 gene_products/
 genomes/
 records/
+src/sub/holins
+src/sub/results_tmhmm
 test_1st/
 test_2nd/
 # ---
