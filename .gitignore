@@ -8,15 +8,14 @@
 # ---
 .ipynb_checkpoints/
 __pycache__/
-bin/
-experimental/
+_bin/
+_experimental/
+_tests/
 gene_products/
 genomes/
 records/
 src/sub/holins
 src/sub/results_tmhmm
-test_1st/
-test_2nd/
 # ---
 # temporary
 # ---
