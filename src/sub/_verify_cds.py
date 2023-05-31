@@ -2,10 +2,10 @@
 
 from Bio import SeqIO
 
-def verify_all_cds_from_file(func_class: str, protein: str) -> int:
+def verify_all_cds_from_file(func_class: str, protein: str) -> tuple:
     """
     Verifies the validity of all the coding regions (CDS) present in the file
-    pointed to by "../sequences/<func_class>/txid2731619_<protein>.fasta" by
+    pointed to by "../../sequences/<func_class>/txid2731619_<protein>.fasta" by
     printing to screen some useful information about a CDS whenever the length
     of the corresponding sequence is not divisible by 3:
     - first codon
@@ -20,11 +20,12 @@ def verify_all_cds_from_file(func_class: str, protein: str) -> int:
     protein: str
         The name of the protein
     """
-    path = f"../sequences/{func_class}/txid2731619_{protein}.fasta"
+    protein = "_".join(protein.split())
+    path = f"../../sequences/{func_class}/txid2731619_{protein}.fasta"
     records = SeqIO.parse(path, "fasta")
     counter = 0
     print("---")
-    for record in records:
+    for i, record in enumerate(records):
         seq = record.seq
         l = len(seq)
         if l%3 != 0:
@@ -35,18 +36,18 @@ def verify_all_cds_from_file(func_class: str, protein: str) -> int:
             print(f"len sequence: {l}")
             print(f"len sequence mod 3: {l%3}")
             print("---")
-    return counter
+    return counter, i+1
 
 
 if __name__ == "__main__":
         
-    import argparse
+    import sys
+    sys.path.append("..")
+    import utils
     
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-func_class")
-    parser.add_argument("-protein")
+    args = utils.get_args(("-func_class",),
+                          ("-protein",))
     
-    args = parser.parse_args()
     func_class = args.func_class
     protein = args.protein
     
@@ -55,7 +56,9 @@ if __name__ == "__main__":
              ">>> python _verify_cds.py -func_class <func_class> -protein <protein>")
         raise ValueError(e)
         
-    counter = verify_all_cds_from_file(func_class, protein)
-    print(f"Number of non valid CDS for {protein!r}: {counter}")
+    not_valid, total = verify_all_cds_from_file(func_class, protein)
+    perc = not_valid / total
+    print(f"Number of non valid CDS regions for {protein!r}: {not_valid}")
+    print(f"Percentage of non valid CDS regions for {protein!r}: {perc:.2%}")
     print("---")
     
