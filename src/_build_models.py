@@ -142,8 +142,6 @@ if __name__ == "__main__":
     # from sklearn.tree import DecisionTreeClassifier as DTC
     # ---
     
-    Path("../models").mkdir(exist_ok=True)
-    
     # tuple of datasets that will feed the ML models
     datasets = ("all",
                 "dna_modification",
@@ -151,8 +149,7 @@ if __name__ == "__main__":
                 "lysis",
                 "lysogeny_repressor",
                 "packaging",
-                "structural",
-                "other")
+                "structural") # "other"
     
     # tuple of ML algorithms used to build the models
     algorithms = (HGBR,) # (HGBR, NaiveBayes, KNC, DTC, RF, SVC, MLPC)

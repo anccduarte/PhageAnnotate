@@ -168,39 +168,37 @@ def get_structural() -> None:
     # get DNA sequences coding for structural proteins
     get_sequences(db=BASE_DIR+"structural", terms=terms)
 
-def get_other() -> None:
-    """
-    Retrieves DNA sequences coding for proteins belonging to the functional class of "other".
-    """
-    # terms for "other" proteins
-    terms = {"scaffolding protein": ["scaffolding protein", "capsid and scaffold protein",
-                                     "head scaffolding protein", "capsid scaffolding protein"],
-             "assembly protein": ["tail assembly chaperone", "tail assembly protein", "tail fiber assembly protein",
-                                  "tail assembly chaperone protein"],
-             "thioredoxin": ["thioredoxin"],
-             "prohead protease": ["capsid maturation protease", "prohead protease", "head maturation protease",
-                                  "prohead serine protease"],
-             "virion morphogenesis protein": ["virion morphogenesis protein"],
-             "AAA domain protein": ["aaa domain protein"],
-             "helix-destabilizing protein": ["helix-destabilizing protein", "dna helix destabilizing protein"],
-             "antitoxin": ["antitoxin"],
-             "hemolysin": ["hemolysin"],
-             "YopX protein": ["yopx protein"],
-             "oxygenase": ["oxygenase", "2og-fe(ii) oxygenase"],
-             "amidoligase": ["amidoligase", "putative amidoligase enzyme"],
-             "CLP protease": ["clp protease", "putative atp dependent clp protease"],
-             "pyocin activator": ["pyocin activator", "pyocin activator protein prtn"]}
-    # get DNA sequences coding for "other" proteins
-    get_sequences(db=BASE_DIR+"other", terms=terms)
+#def get_other() -> None:
+#    """
+#    Retrieves DNA sequences coding for proteins belonging to the functional class of "other".
+#    """
+#    # terms for "other" proteins
+#    terms = {"scaffolding protein": ["scaffolding protein", "capsid and scaffold protein",
+#                                     "head scaffolding protein", "capsid scaffolding protein"],
+#             "assembly protein": ["tail assembly chaperone", "tail assembly protein", "tail fiber assembly protein",
+#                                  "tail assembly chaperone protein"],
+#             "thioredoxin": ["thioredoxin"],
+#             "prohead protease": ["capsid maturation protease", "prohead protease", "head maturation protease",
+#                                  "prohead serine protease"],
+#             "virion morphogenesis protein": ["virion morphogenesis protein"],
+#             "AAA domain protein": ["aaa domain protein"],
+#             "helix-destabilizing protein": ["helix-destabilizing protein", "dna helix destabilizing protein"],
+#             "antitoxin": ["antitoxin"],
+#             "hemolysin": ["hemolysin"],
+#             "YopX protein": ["yopx protein"],
+#             "oxygenase": ["oxygenase", "2og-fe(ii) oxygenase"],
+#             "amidoligase": ["amidoligase", "putative amidoligase enzyme"],
+#             "CLP protease": ["clp protease", "putative atp dependent clp protease"],
+#             "pyocin activator": ["pyocin activator", "pyocin activator protein prtn"]}
+#    # get DNA sequences coding for "other" proteins
+#    get_sequences(db=BASE_DIR+"other", terms=terms)
         
     
 if __name__ == "__main__":
     
-    import argparse
+    import utils
     
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-func_class")
-    args = parser.parse_args()
+    args = utils.get_args(("-func_class",))
     class_ = args.func_class
     
     if class_ is None:
@@ -208,7 +206,7 @@ if __name__ == "__main__":
                         ">>> python _collect.py -func_class <func_class>")
     
     options = ["dna-modification", "dna-replication", "lysis", "lysogeny-repressor", "packaging",
-               "structural", "other"]
+               "structural"] # "other"
     if class_ not in options:
         raise ValueError(f"'{class_}' is not a valid class. Choose one of {{{', '.join(options)}}}.")
     
@@ -217,8 +215,7 @@ if __name__ == "__main__":
              "lysis": get_lysis,
              "lysogeny-repressor": get_lysogeny_repressor,
              "packaging": get_packaging,
-             "structural": get_structural,
-             "other": get_other}
+             "structural": get_structural} # "other": get_other
     
     get_func_class = funcs[class_]
     get_func_class()
