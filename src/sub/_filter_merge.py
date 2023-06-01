@@ -7,7 +7,7 @@ def get_num_tms_per_seq(protein: str, num_files: int) -> list:
     """
     Returns a list object storing the number of transmembrane domains of each
     protein sequence present in the files whose name belongs to the set:
-    "results_tmhmm/TMHMM_<protein>s_<n>.html", n in [1, num_files].
+    "results_tmhmm/TMHMM_<protein>s_<n>.html", for all n in [1, num_files].
     
     Parameters
     ----------
@@ -19,9 +19,9 @@ def get_num_tms_per_seq(protein: str, num_files: int) -> list:
     # read contents of files
     common = f"results_tmhmm/TMHMM_{protein}s"
     temp = [open(f"{common}_{n}.html").read() for n in range(1, num_files+1)]
-    # conacatenate contents of files
+    # concatenate contents of files
     text = "\n".join(temp)
-    # get matches of the expression "Number of predicted TMHs:" in "text"
+    # get matches for the expression "Number of predicted TMHs:" in "text"
     pattern = re.compile(r"Number of predicted TMHs:")
     matches = re.finditer(pattern, text)
     # compute and return the number of TMs for each protein sequence

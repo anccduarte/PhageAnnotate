@@ -103,8 +103,7 @@ if __name__ == "__main__":
                    "lysis": "lysis",
                    "lysogeny_repressor": "lysogeny-repressor",
                    "packaging": "packaging",
-                   "structural": "structural",
-                   "other": "other"}
+                   "structural": "structural"} # "other": "other"
     
     # tuple of initiation codons for translation table 11
     icodons = ("TTG", "CTG", "ATT", "ATC", "ATA", "ATG", "GTG")
