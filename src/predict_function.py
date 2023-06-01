@@ -4,7 +4,6 @@ import joblib
 import numpy as np
 import pandas as pd
 from ml_dataset import MLDataset
-from pathlib import Path
 
 class PredictFunction:
     
@@ -15,7 +14,7 @@ class PredictFunction:
     
     # initialize class variable (all instances of PredictFunction share it)
     DATASETS = ("all", "dna-modification", "dna-replication", "lysis",
-                "lysogeny-repressor", "packaging", "structural", "other")
+                "lysogeny-repressor", "packaging", "structural") # "other"
     
     def __init__(self, path: str, ttable: str, icodons: tuple) -> None:
         """
@@ -70,17 +69,6 @@ class PredictFunction:
             scalers.append(joblib.load(f"../models/{name_ds}_scaler.joblib"))
             support_vecs.append(joblib.load(f"../models/{name_ds}_support.joblib"))
         return models, scalers, support_vecs
-
-    def _get_dataset(self) -> pd.DataFrame:
-        """
-        Constructs and returns a featurized dataset from the sequences contained in
-        the file pointed to by <path>.
-        """
-        data = MLDataset(file=self.path,
-                         prot_name="unknown",
-                         ttable=self.ttable,
-                         icodons=self.icodons).build_dataset()
-        return data.iloc[:, :-1]
     
     def _get_descriptions(self) -> list:
         """
@@ -96,6 +84,79 @@ class PredictFunction:
                 descrips.append(descrip)
         return descrips
 
+    def _get_dataset(self) -> pd.DataFrame:
+        """
+        Constructs and returns a featurized dataset from the sequences contained in
+        the file pointed to by <path>.
+        """
+        data = MLDataset(file=self.path,
+                         prot_name="unknown",
+                         ttable=self.ttable,
+                         icodons=self.icodons).build_dataset()
+        return data.iloc[:, :-1]
+    
+    def _predict_all(self, X_to_pred: pd.DataFrame) -> np.ndarray:
+        """
+        Predicts the functional class associated to each feature vector present in
+        the pd.DataFrame <X_to_pred>. Returns a np.ndarray object containing the
+        predictions.
+        
+        Parameters
+        ----------
+        X_to_pred: pd.DataFrame
+            The dataframe containing the feature vectors
+        """
+        # load model, scaler and support vector for "all.csv"
+        model_all = self._models["all"]
+        scaler_all = self._scalers["all"]
+        support_all = self._support_vecs["all"]
+        # predict functional classes and return the result
+        X_all = scaler_all.transform(X_to_pred)[:, support_all]
+        return model_all.predict(X_all)
+    
+    @staticmethod
+    def validate_probs(probs: np.ndarray) -> bool:
+        """
+        Evaluates the probability vector it takes as input by verifying whether the
+        maximum probablity in <probs> is greater than or equal to 3/2 of the relative
+        frequency of each class (represented by a probability in <probs>).
+        
+        Parameters
+        ----------
+        probs: np.ndarray
+            The probability vector
+        """
+        return np.amax(probs) >= 1.5 * (1 / np.size(probs))
+    
+    def _predict_function(self, vec: pd.Series, func_class: str) -> str:
+        """
+        Predicts the function associated to the feature vector <vec> given that the
+        predicted functional class of <vec> is <func_class>.
+        
+        Parameters
+        ----------
+        vec: pd.Series
+            The feature vector
+        func_class: str
+            The functional class of <vec>
+        """
+        # load appropriate model, scaler and feature suppport
+        model = self._models[func_class]
+        scaler = self._scalers[func_class]
+        support = self._support_vecs[func_class]
+        # scale and select features of the feature vector
+        vec = np.array(vec).reshape(1,-1)
+        X_vec = scaler.transform(vec)[:, support]
+        # get probabilities associated to each function in <func_class>
+        probs = model.predict_proba(X_vec)
+        # evaluate "probs" -> if not valid, function is set to "other"
+        if PredictFunction.validate_probs(probs):
+            func = model.predict(X_vec)[0]
+        else:
+            func = "other"
+        # return the prediction
+        return func
+        
     def _predict(self) -> tuple:
         """
         Predicts the functional class and function associated to each feature vector
@@ -103,26 +164,17 @@ class PredictFunction:
         containing the predictions.
         """
         # get featurized dataset
-        X_pred = self._get_dataset()
-        # load model, scaler and support vector for "all.csv"
-        model_all = self._models["all"]
-        scaler_all = self._scalers["all"]
-        support_all = self._support_vecs["all"]
+        X_to_pred = self._get_dataset()
         # predict functional class
-        X_all = scaler_all.transform(X_pred)[:, support_all]
-        preds_func_class = model_all.predict(X_all)
-        # iterate through rows of <X>, predict function and save prediction
+        preds_func_class = self._predict_all(X_to_pred)
+        # iterate through rows of <X_to_pred>
         preds_func = []
-        for i, vec in X_pred.iterrows():
-            # get/load appropriate model, scaler and feature suppport
+        for i, vec in X_to_pred.iterrows():
+            # get functional class of <vec>
             func_class = preds_func_class[i]
-            model = self._models[func_class]
-            scaler = self._scalers[func_class]
-            support = self._support_vecs[func_class]
-            # predict and save
-            vec = np.array(vec).reshape(1,-1)
-            X_vec = scaler.transform(vec)[:, support]
-            preds_func.append(model.predict(X_vec)[0])
+            # get function of <vec> based on its functional class
+            func = self._predict_function(vec, func_class)
+            preds_func.append(func)
         # return predictions
         return preds_func_class, preds_func
 
