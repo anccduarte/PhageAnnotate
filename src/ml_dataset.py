@@ -218,6 +218,8 @@ class MLDataset:
         """
         return PyPro.GetProDes(seq).GetCTD()
     
+    # maybe do not consider these descriptors (to long to compute)
+    # ---
     @staticmethod
     def _geary_autocorrelation(seq: Seq.Seq) -> dict:
         """
@@ -231,6 +233,8 @@ class MLDataset:
         """
         return PyPro.GetProDes(seq).GetGearyAuto()
     
+    # maybe do not consider these descriptors (to long to compute)
+    # ---
     @staticmethod
     def _moran_autocorrelation(seq: Seq.Seq) -> dict:
         """
@@ -244,6 +248,8 @@ class MLDataset:
         """
         return PyPro.GetProDes(seq).GetMoranAuto()
     
+    # maybe do not consider these descriptors (to long to compute)
+    # ---
     @staticmethod
     def _moreau_broto_autocorrelation(seq: Seq.Seq) -> dict:
         """
@@ -271,7 +277,7 @@ class MLDataset:
         descriptors (240 features), moran autocorrelation descriptors (240 features),
         moreau-broto autocorrelation descriptors (240 features)
         ---
-        Total number of features: 1301
+        Total number of features: 581 (1301 including autocorrelation descriptors)
         """
         # initialize dataset
         dataset = []
@@ -282,6 +288,7 @@ class MLDataset:
             # translate DNA sequence
             tseq = self._translate_seq(seq.seq)
             # probably temporary -> get rid of unwanted symbols in the sequence
+            #                       it may be kept (there are few problematic sequences)
             tseq = MLDataset._get_valid_protein(tseq)
             # build entry by computing sequence descriptors
             entry = {"Len-Protein": len(tseq),
