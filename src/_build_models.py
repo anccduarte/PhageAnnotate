@@ -4,7 +4,6 @@ import joblib
 import numpy as np
 import os
 import pandas as pd
-from pathlib import Path
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestClassifier as RFC
 from sklearn.feature_selection import SelectFromModel
@@ -12,9 +11,14 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-# create directory (if not already created)
-MODELS = "../models"
-Path(MODELS).mkdir(exist_ok=True)
+"""
+IMPORTANT
+---
+The module must be executed in the command line. Importing individual functions
+will throw an error, as all of them include global variables which are only
+accessible to this particular module. These variables are: "DATABASE" and
+"MODELS".
+"""
 
 def get_scaler(dataset: str, X_train: np.ndarray) -> MinMaxScaler:
     """
@@ -68,7 +72,7 @@ def get_support_vector(dataset: str,
 
 def build_model_and_display_stats(dataset: str, model: BaseEstimator) -> None:
     """
-    Builds an ML model fed on the data present in 'database/<file_name>.csv',
+    Builds an ML model fed on the data present in '<DATABASE>/<file_name>.csv',
     saves it to a .joblib file (TEMPORARY) and prints some useful statisitics
     on the testing data (accuracy, precision and recall).
     
@@ -78,8 +82,8 @@ def build_model_and_display_stats(dataset: str, model: BaseEstimator) -> None:
         The name of the .csv file containing the data
     """
     # ---
-    # NOTE: THIS WILL EXCLUSIVELY BE USED TO TRAIN A MODEL WITH 75% OF THE DATA
-    # AND TEST ON THE REMAINING 25% (HENCE, THE MODELS, SCALERS AND SEELCTORS
+    # NOTE: THIS WILL EXCLUSIVELY BE USED TO TRAIN A MODEL WITH 80% OF THE DATA
+    # AND TEST ON THE REMAINING 20% (HENCE, THE MODELS, SCALERS AND SEELCTORS
     # WILL NOT BE SAVED HERE...). THE ONLY PURPOSE OF THIS FUNCTION IS TO TRAIN
     # AN ML MODEL, TEST IT AND DISPLAY THE RESULTS. THIS INCLUDES: SPLIT THE
     # DATA INTO TRAIN AND TEST, SCALE THE DATA BASED ON THE "CHARACTERISTICS"
@@ -93,16 +97,17 @@ def build_model_and_display_stats(dataset: str, model: BaseEstimator) -> None:
     # read data
     print(f"{dataset.upper()} -> {model().__class__.__name__}")
     print("Reading and splitting data...")
-    data = pd.read_csv(f"../database/{dataset}.csv")
+    data = pd.read_csv(f"{DATABASE}/{dataset}.csv")
     # ---
     # split features (explanatory) and label (response)
     X, y = data.iloc[:, 1:-1], data.iloc[:, -1]
     # ---
-    # train-test split
+    # train-test split ("stratify=y" keeps class proportions)
     X_train, X_test, y_train, y_test = train_test_split(X,
                                                         y,
-                                                        test_size=0.25,
-                                                        random_state=42)
+                                                        stratify=y,
+                                                        test_size=0.20,
+                                                        random_state=0)
     # ---
     # scale data (X_train and X_test) according to X_train
     print("Scaling data...")
@@ -115,14 +120,14 @@ def build_model_and_display_stats(dataset: str, model: BaseEstimator) -> None:
     X_train, X_test = X_train[:, support], X_test[:, support]
     # ---
     # build model
-    print("Building model on 75% of the data...")
+    print("Building model on 80% of the data...")
     estimator = model().fit(X_train, y_train)
     # ---
     # TEMPORARY -> save model (only for practicality reasons)
     joblib.dump(estimator, f"{MODELS}/{dataset}.joblib")
     # ---
     # print statistics (accuracy, precision and recall)
-    print("Testing model on 25% of the data...")
+    print("Testing model on 20% of the data...")
     y_pred = estimator.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred, average="macro")
@@ -133,7 +138,9 @@ def build_model_and_display_stats(dataset: str, model: BaseEstimator) -> None:
     
 if __name__ == "__main__":
     
-    from sklearn.ensemble import HistGradientBoostingClassifier as HGBR
+    import utils
+    from pathlib import Path
+    from sklearn.ensemble import HistGradientBoostingClassifier as HGBC
     # ---
     # from sklearn.naive_bayes import CategoricalNB as NaiveBayes
     # from sklearn.neighbors import KNeighborsClassifier as KNC
@@ -142,6 +149,27 @@ if __name__ == "__main__":
     # from sklearn.tree import DecisionTreeClassifier as DTC
     # ---
     
+    # get command line argument
+    args = utils.get_args(("-init",))
+    init = args.init
+    
+    # verify validity of <init> (1)
+    if init is None:
+        raise Exception("<init> has no default value. Please, do:\n"
+                        ">>> python _build_db.py -init <init>")
+    
+    # verify validity of <init> (2)
+    if init not in {"yes", "no"}:
+        raise ValueError(f"{init!r} is not valid for 'init'."
+                         "Choose one of {{'yes', 'no'}}.")
+    
+    # initialize global variables
+    DATABASE = "../database" if init == "yes" else "../database_cs"
+    MODELS = "../models" if init == "yes" else "../models_cs"
+    
+    # create directory (if not already created)
+    Path(MODELS).mkdir(exist_ok=True)
+    
     # tuple of datasets that will feed the ML models
     datasets = ("all",
                 "dna_modification",
@@ -149,10 +177,10 @@ if __name__ == "__main__":
                 "lysis",
                 "lysogeny_repressor",
                 "packaging",
-                "structural") # "other"
+                "structural")
     
     # tuple of ML algorithms used to build the models
-    algorithms = (HGBR,) # (HGBR, NaiveBayes, KNC, DTC, RF, SVC, MLPC)
+    algorithms = (HGBC,) # (HGBC, NaiveBayes, KNC, DTC, RF, SVC, MLPC)
     
     print("---")
     for dataset in datasets:
