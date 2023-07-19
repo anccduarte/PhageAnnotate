@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from pathlib import Path
 from collect_sequences import CollectSequences
 
-BASE_DIR = "../sequences/"
-Path(BASE_DIR).mkdir(exist_ok=True)
-
-def get_sequences(db: str, terms: dict) -> None:
+def get_sequences(db: str, terms: dict, negatives: bool) -> None:
     """
     Wrapper function for CollectSequences.
     
@@ -16,6 +12,8 @@ def get_sequences(db: str, terms: dict) -> None:
         The name of the directory where the retrieved sequences are stored
     terms: list[str]
         A list of search terms
+    negatives: bool
+        Whether to include the terms in <terms> or terms not in <terms>
     """
     # collect sequences
     print("---")
@@ -23,13 +21,20 @@ def get_sequences(db: str, terms: dict) -> None:
         print(f"Collecting {protein!r} sequences...")
         CollectSequences(db=db,
                          cname=protein,
-                         terms=terms[protein]).get_sequences(taxid="2731619")
+                         terms=terms[protein],
+                         negatives=negatives).get_sequences(taxid="2731619")
         print("---")
         
-def get_dna_modification() -> None:
+def get_dna_modification(only_terms: bool = False) -> None:
     """
     Retrieves DNA sequences coding for proteins belonging to the functional class of DNA modification
-    proteins.
+    proteins. If <only_terms> is set to True, the sequences are not retrieved and a function attribute is set
+    to "terms".
+    
+    Parameters
+    ----------
+    only_terms: bool
+        Whether to only get the terms associated to the functional class
     """
     # terms for DNA modification proteins
     terms = {"nuclease": ["hnh endonuclease", "exonuclease", "hnh homing endonuclease",
@@ -57,17 +62,25 @@ def get_dna_modification() -> None:
                              "adenine specific dna methyltransferase", "transferase"],
              "phosphohydrolase": ["nucleoside triphosphate pyrophosphohydrolase", "phosphohydrolase"],
              "glutaredoxin": ["glutaredoxin"],
-             "chromatin remodeling complex ATPase": ["chromatin remodeling complex atpase"],
              "ribonuclease": ["endodeoxyribonuclease i", "endodeoxyribonuclease rusa", "endodeoxyribonuclease",
-                              "ribonuclease"],
-             "restriction alleviation protein": ["restriction alleviation protein"]}
-    # get DNA sequences coding for DNA modification proteins
-    get_sequences(db=BASE_DIR+"dna_modification", terms=terms)
+                              "ribonuclease"]}
+    if not only_terms:
+        # get DNA sequences coding for DNA modification proteins
+        get_sequences(db=BASE_DIR+"dna_modification", terms=terms, negatives=False)
+    else:
+        # initialize function attribute
+        get_dna_modification.terms = terms
     
-def get_dna_replication() -> None:
+def get_dna_replication(only_terms: bool = False) -> None:
     """
     Retrieves DNA sequences coding for proteins belonging to the functional class of DNA replication
-    proteins.
+    proteins. If <only_terms> is set to True, the sequences are not retrieved and a function attribute is set
+    to "terms".
+    
+    Parameters
+    ----------
+    only_terms: bool
+        Whether to only get the terms associated to the functional class
     """
     # terms for DNA replication proteins
     terms = {"transcription factor": ["whib family transcription factor", "transcriptional regulator",
@@ -82,29 +95,46 @@ def get_dna_replication() -> None:
              "DNA ligase": ["dna ligase"],
              "DNA polymerase": ["dna polymerase i", "dna polymerase", "dna polymerase b"],
              "RNA ligase": ["rna ligase"],
-             "replication initiation protein": ["replication initiation protein"],
-             "replisome organizer": ["replisome organizer"],
-             "ParB protein": ["parb protein"],
-             "chromosome partitioning protein": ["chromosome partitioning protein"]}
-    # get DNA sequences coding for DNA replication proteins
-    get_sequences(db=BASE_DIR+"dna_replication", terms=terms)
+             "replication initiation protein": ["replication initiation protein"]}
+    if not only_terms:
+        # get DNA sequences coding for DNA replication proteins
+        get_sequences(db=BASE_DIR+"dna_replication", terms=terms, negatives=False)
+    else:
+        # initialize function attribute
+        get_dna_replication.terms = terms
         
-def get_lysis() -> None:
+def get_lysis(only_terms: bool = False) -> None:
     """
-    Retrieves DNA sequences coding for proteins belonging to the functional class of lysis proteins.
+    Retrieves DNA sequences coding for proteins belonging to the functional class of lysis proteins. If
+    <only_terms> is set to True, the sequences are not retrieved and a function attribute is set to "terms".
+    
+    Parameters
+    ----------
+    only_terms: bool
+        Whether to only get the terms associated to the functional class
     """
     # terms for lysis proteins
     terms = {"endolysin": ["n-acetylmuramoyl-l-alanine amidase", "endolysin", "peptidoglycan hydrolase",
                            "cell wall hydrolase autolysin"],
              "holin": ["holin", "putative holin", "holin protein"],
-             "spanin": ["rz-like spanin", "spanin", "i-spanin", "o-spanin", "u-spanin", "Rz", "Rz1"]}
-    # get DNA sequences coding for lysis proteins
-    get_sequences(db=BASE_DIR+"lysis", terms=terms)
+             "spanin": ["rz-like spanin", "spanin", "i-spanin", "o-spanin", "u-spanin", "rz", "rz1"]}
+    if not only_terms:
+        # get DNA sequences coding for lysis proteins
+        get_sequences(db=BASE_DIR+"lysis", terms=terms, negatives=False)
+    else:
+        # initialize function attribute
+        get_lysis.terms = terms
 
-def get_lysogeny_repressor() -> None:
+def get_lysogeny_repressor(only_terms: bool = False) -> None:
     """
     Retrieves DNA sequences coding for proteins belonging to the functional class of lysogeny/repressor
-    proteins.
+    proteins. If <only_terms> is set to True, the sequences are not retrieved and a function attribute is
+    set to "terms".
+    
+    Parameters
+    ----------
+    only_terms: bool
+        Whether to only get the terms associated to the functional class
     """
     # terms for lysogeny/repressor proteins
     terms = {"integrase": ["integrase", "tyrosine integrase"],
@@ -115,25 +145,44 @@ def get_lysogeny_repressor() -> None:
                            "sos-response transcriptional repressor", "repressor"],
              "resolvase": ["holliday junction resolvase", "resolvase"],
              "transposase": ["transposase"],
-             "antirepressor": ["antirepressor protein", "antirepressor"],
-             "excisionase": ["excisionase"]}
-    # get DNA sequences coding for lysogeny/repressor proteins
-    get_sequences(db=BASE_DIR+"lysogeny_repressor", terms=terms)
+             "antirepressor": ["antirepressor protein", "antirepressor"]}
+    if not only_terms:
+        # get DNA sequences coding for lysogeny/repressor proteins
+        get_sequences(db=BASE_DIR+"lysogeny_repressor", terms=terms, negatives=False)
+    else:
+        # initialize function attribute
+        get_lysogeny_repressor.terms = terms
     
-def get_packaging() -> None:
+def get_packaging(only_terms: bool = False) -> None:
     """
-    Retrieves DNA sequences coding for proteins belonging to the functional class of packaging proteins.
+    Retrieves DNA sequences coding for proteins belonging to the functional class of packaging proteins. If
+    <only_terms> is set to True, the sequences are not retrieved and a function attribute is set to "terms".
+    
+    Parameters
+    ----------
+    only_terms: bool
+        Whether to only get the terms associated to the functional class
     """
     # terms for packaging proteins
     terms = {"large terminase": ["terminase large subunit", "large terminase", "large subunit terminase"],
              "small terminase": ["terminase small subunit", "putative terminase small subunit",
                                  "small terminase"]}
-    # get DNA sequences coding for packaging proteins
-    get_sequences(db=BASE_DIR+"packaging", terms=terms)
+    if not only_terms:
+        # get DNA sequences coding for packaging proteins
+        get_sequences(db=BASE_DIR+"packaging", terms=terms, negatives=False)
+    else:
+        # initialize function attribute
+        get_packaging.terms = terms
     
-def get_structural() -> None:
+def get_structural(only_terms: bool = False) -> None:
     """
-    Retrieves DNA sequences coding for proteins belonging to the functional class of structural proteins.
+    Retrieves DNA sequences coding for proteins belonging to the functional class of structural proteins. If
+    <only_terms> is set to True, the sequences are not retrieved and a function attribute is set to "terms".
+    
+    Parameters
+    ----------
+    only_terms: bool
+        Whether to only get the terms associated to the functional class
     """
     # terms for structural proteins
     terms = {"minor tail": ["minor tail protein", "minor tail"],
@@ -165,58 +214,107 @@ def get_structural() -> None:
              "collar": ["upper collar protein", "lower collar protein", "collar", "collar protein"],
              "tailspike": ["tailspike", "tail spike", "tail-spike", "tailspike protein", "tail spike protein",
                            "tail-spike protein"]}
-    # get DNA sequences coding for structural proteins
-    get_sequences(db=BASE_DIR+"structural", terms=terms)
-
-#def get_other() -> None:
-#    """
-#    Retrieves DNA sequences coding for proteins belonging to the functional class of "other".
-#    """
-#    # terms for "other" proteins
-#    terms = {"scaffolding protein": ["scaffolding protein", "capsid and scaffold protein",
-#                                     "head scaffolding protein", "capsid scaffolding protein"],
-#             "assembly protein": ["tail assembly chaperone", "tail assembly protein", "tail fiber assembly protein",
-#                                  "tail assembly chaperone protein"],
-#             "thioredoxin": ["thioredoxin"],
-#             "prohead protease": ["capsid maturation protease", "prohead protease", "head maturation protease",
-#                                  "prohead serine protease"],
-#             "virion morphogenesis protein": ["virion morphogenesis protein"],
-#             "AAA domain protein": ["aaa domain protein"],
-#             "helix-destabilizing protein": ["helix-destabilizing protein", "dna helix destabilizing protein"],
-#             "antitoxin": ["antitoxin"],
-#             "hemolysin": ["hemolysin"],
-#             "YopX protein": ["yopx protein"],
-#             "oxygenase": ["oxygenase", "2og-fe(ii) oxygenase"],
-#             "amidoligase": ["amidoligase", "putative amidoligase enzyme"],
-#             "CLP protease": ["clp protease", "putative atp dependent clp protease"],
-#             "pyocin activator": ["pyocin activator", "pyocin activator protein prtn"]}
-#    # get DNA sequences coding for "other" proteins
-#    get_sequences(db=BASE_DIR+"other", terms=terms)
+    if not only_terms:
+        # get DNA sequences coding for structural proteins
+        get_sequences(db=BASE_DIR+"structural", terms=terms, negatives=False)
+    else:
+        # initialize function attribute
+        get_structural.terms = terms
+    
+def get_hypothetical(only_terms: bool = False) -> None:
+    """
+    Retrieves DNA sequences annotated as "hypothetical protein". Note that this annotation may have two distinct
+    meanings: 1. the function coded by the sequence is not yet known; 2. the function coded by the sequence is
+    already known, but, for some reason, the sequence was not properly annotated. If <only_terms> is set to True,
+    the sequences are not retrieved and a function attribute is set to "terms".
+    
+    Parameters
+    ----------
+    only_terms: bool
+        Whether to only get the terms associated to the functional class
+    """
+    # terms for hypothetical proteins
+    terms = {"hypothetical protein": ["hypothetical", "hypothetical protein", "conserved hypothetical protein",
+                                      "protein of unknown function", "protein of unknown function duf859",
+                                      "protein of unknown function", "protein of unknown function (duf551)",
+                                      "unknown", "unknown function", "protein of unknown function (duf1492)",
+                                      "protein of unknown function (duf4376)", "protein of unknown function (duf1351)",
+                                      "protein of unknown function (duf2634)", "protein of unknown function (duf2577)",
+                                      "protein of unknown function (duf1018)", "protein of unknown function (duf2612)",
+                                      "protein of unknown function (duf2829)", "protein of unknown function (duf722)",
+                                      "protein of unknown function (duf4969)", "protein of unknown function duf1424",
+                                      "protein of unknown function (duf669)", "protein of unknown function (duf1642)",
+                                      "protein of unknown function (duf1366)"]}
+    if not only_terms:
+        # get DNA sequences coding for hypothetical proteins
+        get_sequences(db=BASE_DIR+"hypothetical", terms=terms, negatives=False)
+    else:
+        # initialize function attribute
+        get_hypothetical.terms = terms
         
+def get_miscellaneous() -> None:
+    """
+    Retrieves DNA sequences coding for miscellaneous proteins, that is, proteins whose common name is not present
+    in the lists of terms initialized in "get_dna_modification", "get_dna_replication", "get_lysis",
+    "get_lysogeny_repressor", "get_packaging", "get_structural" or "get_hypothetical".
+    """
+    # initialize tuple containing function objects ready to be called and an empty list for storing new values
+    values = []
+    funcs = (get_dna_modification, get_dna_replication, get_lysis, get_lysogeny_repressor, get_packaging,
+             get_structural, get_hypothetical)
+    # populate "values" by iterating through the terms stored as an attribute of each function
+    for func in funcs:
+        func(only_terms=True)
+        new_values = [value for protein_key in func.terms.values() for value in protein_key]
+        values.extend(new_values)
+    # initialize terms
+    terms = {"miscellaneous": values}
+    # get DNA sequences coding for miscellaneous proteins
+    get_sequences(db=BASE_DIR+"miscellaneous", terms=terms, negatives=True)
+         
     
 if __name__ == "__main__":
     
     import utils
+    from pathlib import Path
     
-    args = utils.get_args(("-func_class",))
+    # get command line arguments
+    args = utils.get_args(("-base_dir",),
+                          ("-func_class",))
+    base_dir = args.base_dir
     class_ = args.func_class
     
-    if class_ is None:
-        raise Exception("'func_class' has no default value. Please, do:\n"
-                        ">>> python _collect.py -func_class <func_class>")
+    # check whether <base_dir> and <class_> are valid (1)
+    if base_dir is None or class_ is None:
+        e = ("<base_dir> and <func_class> have no default values. Please do:\n"
+             ">>> python _collect.py -base_dir <base_dir> -func_class <func_class>")
+        raise Exception(e)
     
+    # check whether <base_dir> is valid (2)
+    if base_dir not in {"init", "cs"}:
+        raise ValueError(f"{base_dir!r} is not valid for 'base_dir'. Choose one of {{'init', 'cs'}}.")
+    
+    # check whether <class_> is valid (2)
     options = ["dna-modification", "dna-replication", "lysis", "lysogeny-repressor", "packaging",
-               "structural"] # "other"
+               "structural", "hypothetical", "miscellaneous"] # "other"
     if class_ not in options:
         raise ValueError(f"'{class_}' is not a valid class. Choose one of {{{', '.join(options)}}}.")
-    
+        
+    # initialize BASE_DIR and create directory (if not already created)
+    BASE_DIR = "../sequences/" if base_dir == "init" else "../sequences_cs/"
+    Path(BASE_DIR).mkdir(exist_ok=True)
+            
+    # initialize function dictionary
     funcs = {"dna-modification": get_dna_modification,
              "dna-replication": get_dna_replication,
              "lysis": get_lysis,
              "lysogeny-repressor": get_lysogeny_repressor,
              "packaging": get_packaging,
-             "structural": get_structural} # "other": get_other
+             "structural": get_structural,
+             "hypothetical": get_hypothetical,
+             "miscellaneous": get_miscellaneous}
     
+    # call appropriate function
     get_func_class = funcs[class_]
     get_func_class()
         
