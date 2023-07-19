@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import os
+import numpy as np
 import pandas as pd
 from ml_dataset import MLDataset
-from pathlib import Path
 
-# initialize database (if not already initialized)
-DATABASE = "../database"
-Path(DATABASE).mkdir(exist_ok=True)
-
-# initialize global variables
-DF_ALL = pd.DataFrame()
-TO_ADD = []
+"""
+IMPORTANT
+---
+The module must be executed in the command line. Importing individual functions
+may throw an error, as some of them include global variables which are only
+accessible to this particular module. These variables are: "DF_ALL", "TO_ADD",
+"SEQUENCES" and "DATABASE".
+"""
 
 def get_protein_name(nfile: str) -> str:
     """
@@ -29,7 +30,8 @@ def get_protein_name(nfile: str) -> str:
 def build_df_from_dir(dir_: str, ttable: str, icodons: tuple) -> pd.DataFrame:
     """
     Constructs and returns a pd.DataFrame containing a featurized version
-    of the sequences present in the directory "../sequences/<dir_>".
+    of the sequences present in the directory "<SEQUENCES>/<dir_>". It also
+    updates the global variable "DF_ALL".
     
     Parameters
     ----------
@@ -40,19 +42,19 @@ def build_df_from_dir(dir_: str, ttable: str, icodons: tuple) -> pd.DataFrame:
     icodons: tuple
         A tuple of possible initiation codons given the table <ttable>
     """
-    # permit mutations in "DF_ALL"
+    # allow to mutate "DF_ALL"
     global DF_ALL
     # initialize df for functional class
     df_class = pd.DataFrame()
     # main loop -> iterate through files in <dir_>
-    for file in os.scandir(f"../sequences/{dir_}"):
+    for file in os.scandir(f"{SEQUENCES}/{dir_}"):
         # guard clause -> ignore files not ending in ".fasta" 
         if not file.name.endswith("fasta"):
             continue
         # get name of the protein coded by the DNA sequences in "file"
         prot_name = get_protein_name(nfile=file.name)
         # featurize DNA sequences in <file>
-        df = MLDataset(file=f"../sequences/{dir_}/{file.name}",
+        df = MLDataset(file=f"{SEQUENCES}/{dir_}/{file.name}",
                        prot_name=prot_name,
                        ttable=ttable,
                        icodons=icodons).build_dataset()
@@ -65,9 +67,9 @@ def build_df_from_dir(dir_: str, ttable: str, icodons: tuple) -> pd.DataFrame:
         
 def build_dbs(dirs: dict, ttable: str, icodons: tuple) -> None:
     """
-    Constructs pd.DataFrames containing featurized versions of the
-    sequences present in the directories <dirs>, and saves them to .csv
-    files.
+    Constructs pd.DataFrames containing featurized versions of the sequences
+    present in the directories <dirs>, and saves them to .csv files. It also
+    updates the global variable "TO_ADD".
     
     Parameters
     ----------
@@ -79,7 +81,7 @@ def build_dbs(dirs: dict, ttable: str, icodons: tuple) -> None:
     icodons: tuple
         A tuple of possible initiation codons given the table <ttable>
     """
-    # permit mutations in "TO_ADD"
+    # allow to mutate "TO_ADD"
     global TO_ADD
     # main loop -> iterate through directories
     for dir_ in dirs:
@@ -97,18 +99,50 @@ def build_dbs(dirs: dict, ttable: str, icodons: tuple) -> None:
 
 if __name__ == "__main__":
     
+    import utils
+    from pathlib import Path
+    
+    # get command line argument
+    args = utils.get_args(("-init",))
+    init = args.init
+    
+    # verify validity of <init> (1)
+    if init is None:
+        raise Exception("<init> has no default value. Please, do:\n"
+                        ">>> python _build_db.py -init <init>")
+    
+    # verify validity of <init> (2)
+    if init not in {"yes", "no"}:
+        raise ValueError(f"{init!r} is not valid for 'init'."
+                         "Choose one of {{'yes', 'no'}}.")
+    
+    # initialize global variables
+    SEQUENCES = "../sequences" if init == "yes" else "../sequences_cs"
+    DATABASE = "../database" if init == "yes" else "../database_cs"
+    
+    # initialize database (if not already initialized)
+    Path(DATABASE).mkdir(exist_ok=True)
+    
     # directories where the DNA sequences are stored
     directories = {"dna_modification": "dna-modification",
                    "dna_replication": "dna-replication",
                    "lysis": "lysis",
                    "lysogeny_repressor": "lysogeny-repressor",
                    "packaging": "packaging",
-                   "structural": "structural"} # "other": "other"
+                   "structural": "structural"}
+    
+    # add the dataset "other" to <directories> if not <init>
+    if init == "no":
+        directories["other"] = "other"
     
     # tuple of initiation codons for translation table 11
     icodons = ("TTG", "CTG", "ATT", "ATC", "ATA", "ATG", "GTG")
     
-    # build databases
+    # initialize second set of global variables
+    DF_ALL = pd.DataFrame()
+    TO_ADD = []
+    
+    # build database
     build_dbs(dirs=directories, ttable="11", icodons=icodons)
     
     # delete column with protein names from "DF_ALL"
