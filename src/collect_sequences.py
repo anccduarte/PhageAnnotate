@@ -15,7 +15,7 @@ class CollectSequences:
     to a set of search terms provided by the user.
     """
     
-    def __init__(self, db: str, cname: str, terms: list[str]) -> None:
+    def __init__(self, db: str, cname: str, terms: list[str], negatives: bool) -> None:
         """
         Initializes an instance of SeqMining.
         
@@ -27,17 +27,20 @@ class CollectSequences:
             The common name of the target gene product
         terms: list[str]
             A list of search terms
+        negatives: bool
+            Whether to include the terms in <terms> or terms not in <terms>
         """
         self.db = CollectSequences._check_db(db)
         self.cname = "_".join("_".join(cname.split("-")).split(" "))
         self.terms = [" ".join(term.split()).lower() for term in terms]
+        self.negatives = negatives
        
     def __repr__(self) -> str:
         """
         Returns the string representation of the object.
         """
         class_ = self.__class__.__name__
-        return f"{class_}({self.db!r}, {self.cname!r}, {self.terms!r})"
+        return f"{class_}({self.db!r}, {self.cname!r}, {self.terms!r}, {self.negatives})"
     
     @staticmethod
     def _check_db(db: str) -> str:
@@ -55,16 +58,22 @@ class CollectSequences:
     
     def _validate_product(self, product: str) -> bool:
         """
-        Verifies the validity of <product> (<product> is valid if and only if there is
-        a term in the list of terms provided by the user that exactly matches it).
+        Verifies the validity of <product>. If <self.negatives> is set to False, <product> is
+        valid if and only if there is a term in the list of terms provided by the user that
+        exactly matches it. Otherwise, if <self.negatives> is set to True, <product> is valid
+        if and only if all terms in <self.terms> are distinct from <product>.
         
         Parameters
         ----------
         product: str
             A protein product coded by a given DNA sequence
         """
-        # check if any term in <self.terms> is equal to <product>
-        return any(term == product for term in self.terms)
+        if not self.negatives:
+            # check if any term in <self.terms> is equal to <product>
+            return product in set(self.terms)
+        else:
+            # check if all terms in <self.terms> is distinct from product
+            return product not in set(self.terms)
     
     @staticmethod
     def _get_sequence(record: SeqRecord, feature: SeqFeature) -> SeqRecord:
