@@ -20,6 +20,9 @@ src/sub/results_tmhmm
 # temporary
 # ---
 database/
+database_cs/
 models/
+models_cs/
 results/
 sequences/
+sequences_cs/
