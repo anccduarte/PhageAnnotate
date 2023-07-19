@@ -80,7 +80,7 @@ if __name__ == "__main__":
     if any(arg is None for arg in [protein, num_files, original_path]):
         p, n, o = "protein", "num_files", "original_path"
         e = (f"<{p}>, <{n}> and <{o}> have no default values. Please do:\n"
-             f">>> python _split_holins.py -{p} <{p}> -{n} <{n}> -{o} <{o}>")
+             f">>> python _filter_merge.py -{p} <{p}> -{n} <{n}> -{o} <{o}>")
         raise ValueError(e)
         
     num_original, num_filtered = filter_merge(protein=protein,

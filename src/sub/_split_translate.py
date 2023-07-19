@@ -104,7 +104,7 @@ if __name__ == "__main__":
     if any(arg is None for arg in [cutoff, func_class, protein]):
         c, f, p = "cutoff", "func_class", "protein"
         e = (f"<{c}>, <{f}> and <{p}> have no default values. Please do:\n"
-             f">>> python _split_holins.py -{c} <{c}> -{f} <{f}> -{p} <{p}>")
+             f">>> python _split_translate.py -{c} <{c}> -{f} <{f}> -{p} <{p}>")
         raise ValueError(e)
     
     # remaining arguments
