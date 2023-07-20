@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import math
-import os
 import pandas as pd
-from Bio import SeqIO, SeqRecord, SeqFeature
-from tqdm.auto import tqdm
 
 # --------------------------------------------------------------------------------
 
@@ -69,39 +65,3 @@ def rank_gene_products(tol: int) -> None:
         for (name, count) in sorted_items:
             fout.write(f"- {name}: {count}\n")
 
-# --------------------------------------------------------------------------------
-
-# collect all sequences present in all genome records of phages and store them in
-# a .fasta file (the file will be the input of CD-HIT)
-# ---
-def collect_all(tol_records: int) -> None:
-    # ---
-    def get_sequence(record: SeqRecord, feature: SeqFeature) -> SeqRecord:
-        # ---
-        fr, to = feature.location.start, feature.location.end
-        seq = record.seq[fr:to]
-        if feature.location.strand == -1:
-            seq = seq.reverse_complement()
-        return seq
-    # ---
-    with open(f"all_sequences.fasta", "w") as fout:
-        # ---
-        for file in tqdm(os.scandir("../../records")):
-            # ---
-            if not file.name.endswith(".gb"):
-                continue
-            # ---
-            genome_record = SeqIO.read(f"../../records/{file.name}", "gb")
-            for feature in genome_record.features:
-                # ---
-                if not feature.type == "CDS":
-                    continue
-                # ---
-                product = feature.qualifiers.get("product", [None])[0]
-                if product is None:
-                    continue
-                # ---
-                seq = get_sequence(genome_record, feature)
-                id_, source = genome_record.id, genome_record.annotations['source']
-                # ---
-                fout.write(f"> {id_} | {source} | {product}\n{seq}\n\n")
