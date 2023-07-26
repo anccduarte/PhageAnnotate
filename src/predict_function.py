@@ -75,12 +75,10 @@ class PredictFunction:
         """
         models, scalers, support_vecs = [], [], []
         for ds in PredictFunction.DATASETS:
-            # get name of the dataset
-            name_ds = "_".join(ds.split("-"))
             # get model, scaler and support for <ds>
-            model = joblib.load(f"../{self.models_dir}/{name_ds}.joblib")
-            scaler = joblib.load(f"../{self.models_dir}/{name_ds}_scaler.joblib")
-            support = joblib.load(f"../{self.models_dir}/{name_ds}_support.joblib")
+            model = joblib.load(f"../{self.models_dir}/model-{name_ds}.joblib")
+            scaler = joblib.load(f"../{self.models_dir}/scaler-{name_ds}.joblib")
+            support = joblib.load(f"../{self.models_dir}/support-{name_ds}.joblib")
             # append the latter to the respective lists
             models.append(model)
             scalers.append(scaler)
