@@ -171,7 +171,7 @@ class CollectSequences:
                     # guard clause 2 -> ignore features whose type is not "CDS"
                     if feature.type != "CDS":
                         continue
-                    product = feature.qualifiers.get("product", ["not"])[0]
+                    product = feature.qualifiers.get("product", ["no-product"])[0]
                     # guard clause 3 -> ignore feature if "product" is not valid
                     if not self._validate_product(product.lower()):
                         continue

@@ -144,11 +144,8 @@ if __name__ == "__main__":
     # build database
     build_dbs(dirs=directories, ttable="11", icodons=icodons)
     
-    # delete column with protein names from "DF_ALL"
-    del DF_ALL["Function"]
-    
-    # add new column to "DF_ALL" (functional classes)
-    DF_ALL["Func-Class"] = TO_ADD
+    # replace last column of "DF_ALL" (functions -> functional classes)
+    DF_ALL["Function"] = TO_ADD
 
     # save "DF_ALL" to a .csv file
     print("Saving 'DF_ALL' to 'all.csv'...")
