@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
 # basic imports
+import collections
 import joblib
 import numpy as np
 import os
 import pandas as pd
+import warnings
 # sklearn estimators
 from sklearn.ensemble import HistGradientBoostingClassifier as HGBC
 from sklearn.ensemble import RandomForestClassifier as RFC
-from sklearn.naive_bayes import CategoricalNB as NaiveBayes
+from sklearn.naive_bayes import GaussianNB as GNB
 from sklearn.neighbors import KNeighborsClassifier as KNC
 from sklearn.neural_network import MLPClassifier as MLPC
 from sklearn.svm import SVC
@@ -22,41 +24,66 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.preprocessing import MinMaxScaler
 
+# ignore sklearn warnings
+warnings.filterwarnings("ignore")
+
 class MLModel:
     
     """
-    Constructs a machine learning (ML) model based on an ML algorithm and data
-    provided by the user. The validation and test sizes are also adjustable.
+    Constructs a machine learning (ML) model based on an ML algorithm and data provided
+    by the user. The validation and test sizes are also adjustable.
     """
     
     ALGOS = {"gradient-boosting": HGBC,
              "random-forest": RFC,
-             "naive-bayes": NaiveBayes,
+             "naive-bayes": GNB,
              "k-nearest-neighbors": KNC,
              "neural-network": MLPC,
              "support-vector-machine": SVC,
              "decision-tree": DTC}
     
-    HYPER = {"gradient-boosting": {"learning_rate": [0.05, 0.1],
-                                   "max_iter": [100, 150, 200]},
+    HYPER = {"gradient-boosting": {0: {"max_iter": [100, 150, 200]},
+                                   1: {"learning_rate": [0.05, 0.1, 0.2],
+                                       "max_iter": [100, 150, 200],
+                                       "max_leaf_nodes": [15, 31, 63],
+                                       "min_samples_leaf": [10, 20, 30]}},
              # ---
-             "random-forest": {"hyper1": ["val1", "val2", "val3"],
-                               "hyper2": ["val1", "val2", "val3"]},
+             "random-forest": {0: {}, # no optimization
+                               1: {"n_estimators": [100, 150, 200],
+                                   "criterion": ["gini", "entropy"],
+                                   "min_samples_split": [2, 3, 4],
+                                   "min_samples_leaf": [1, 2],
+                                   "max_features": ["sqrt", "log2"]}},
              # ---
-             "naive-bayes": {"hyper1": ["val1", "val2", "val3"],
-                             "hyper2": ["val1", "val2", "val3"]},
+             "naive-bayes": {0: {}, # no optimization
+                             1: {}}, # no optimization
              # ---
-             "k-nearest-neighbors": {"hyper1": ["val1", "val2", "val3"],
-                                     "hyper2": ["val1", "val2", "val3"]},
+             "k-nearest-neighbors": {0: {}, # no optimization
+                                     1: {"n_neighbors": [5, 8, 10],
+                                         "algorithm": ["ball_tree", "kd_tree"], # stoch
+                                         "p": [1, 2]}}, # p -> minkowski power
              # ---
-             "neural-network": {"hyper1": ["val1", "val2", "val3"],
-                                "hyper2": ["val1", "val2", "val3"]},
+             "neural-network": {0: {"max_iter": [500, 1000, 2000]},
+                                1: {"hidden_layer_sizes": [(100,), # 1 hidden layer
+                                                           (100, 50), # 2 hidden layers
+                                                           (100, 50, 20)], # 3 hidden
+                                    "activation": ["relu", "tanh"],
+                                    "solver": ["adam", "sgd"],
+                                    "learning_rate": ["constant", "invscaling"],
+                                    "max_iter": [500, 1000, 2000],
+                                    "learning_rate_init": [0.001, 0.005],
+                                    "early_stopping": [False, True]}},
              # ---
-             "support-vector-machine": {"hyper1": ["val1", "val2", "val3"],
-                                        "hyper2": ["val1", "val2", "val3"]},
+             "support-vector-machine": {0: {}, # no optimization
+                                        1: {"C": [0.1, 1, 10],
+                                            "kernel": ["linear", "poly", "rbf"],
+                                            "degree": [2, 3, 4],
+                                            "decision_function_shape": ["ovo", "ovr"]}},
              # ---
-             "decision-tree": {"hyper1": ["val1", "val2", "val3"],
-                               "hyper2": ["val1", "val2", "val3"]},}
+             "decision-tree": {0: {}, # no optimization
+                               1: {"criterion": ["gini", "entropy"],
+                                   "min_samples_split": [2, 3, 4],
+                                   "min_samples_leaf": [1, 2]}}}
     
     def __init__(self,
                  data_path: str,
@@ -64,6 +91,7 @@ class MLModel:
                  algorithm: str,
                  test_size: float,
                  random_state: int = 0,
+                 init: bool = True,
                  final_model: bool = False) -> None:
         """
         Initializes an instance of MLModel.
@@ -71,7 +99,7 @@ class MLModel:
         Parameters
         ----------
         data_path: str
-            The path to a .csv file containing the data that will feed the model
+            The path to the .csv file containing the data feeding the model
         models_dir: str
             The name of the directory where the .joblib files storing information
             on the constructed model are to be saved (only relevant if <final_model>
@@ -82,11 +110,16 @@ class MLModel:
             The proportion of the data to be used for testing
         random_state: int (default=0)
             Controls the split of dataset into training, testing and validation
+        init: bool (default=True)
+            Whether the model being built belongs to the first set of models (note
+            that the second set of models are fed on datasets which encompass
+            predictions made by the first set of models)
         final_model: bool (deafult=False)
             Whether the model to be trained is definitive. If set to True, the
             scaler, the support vector (used for feature selection) and the model
             itself are saved in .joblib files for further use (make predictions on
-            new data)
+            new data). Moreover, a .txt file storing the indices of the rows that
+            comprise the testing set is created if <init> is also set to True
             
         Attributes
         ----------
@@ -103,21 +136,72 @@ class MLModel:
         self.algorithm = algorithm
         self.test_size = test_size
         self.random_state = random_state
+        self.init = init
         self.final_model = final_model
         # attributes
-        self._dataset = pd.read_csv(data_path)
+        self._dataset = MLModel._read_csv(data_path)
         self._name_set = data_path.split("/")[-1].split(".")[0].replace("_","-")
         self._estimator = MLModel.ALGOS[algorithm]
+    
+    @staticmethod
+    def _read_csv(data_path: str) -> pd.DataFrame:
+        """
+        Reads and returns the dataset pointed to by <data_path>. All columns except
+        for the last are casted to np.float32, reducing RAM usage by approximately 50%.
+        Returns the newly created dataset.
         
-    def _train_test_split(self) -> tuple:
+        Parameters
+        ----------
+        data_path: str
+            The path to the .csv file containing the data feeding the model
+        """
+        # display state of the process on screen (read data)
+        print(f"\nReading data from {data_path!r}...")
+        # construct mapping for data types
+        map_ = collections.defaultdict(lambda: np.float32)
+        map_["Function"] = object
+        # read .csv (with types specified by <map_>) and return the resulting dataset
+        return pd.read_csv(data_path, dtype=map_)
+    
+    def __repr__(self) -> str:
+        """
+        Returns the string representation of the object.
+        """
+        c = self.__class__.__name__
+        d, m, a, t = self.data_path, self.models_dir, self.algorithm, self.test_size
+        r, i, f = self.random_state, self.init, self.final_model
+        res = f"{c}({d!r}, {m!r}, {a!r}, {t!r}, {r!r}, {i!r}, {f!r})"
+        return res
+        
+    def _save_xtest_indices(self, x_test: pd.DataFrame, txt_name: str) -> None:
+        """
+        Saves the indices of the rows assigned for testing purposes. It is only
+        called when <self.final_model> and <self.init> are set to True. Its purpose
+        is to test the second set of models (the ones fed on an expanded dataset
+        encompassing predictions made by the first set of models) on the same data
+        used to test the first set of models.
+        
+        Parameters
+        ----------
+        x_test: pd.DataFrame
+            The feature vectors of the testing portion of the data
+        txt_name: str
+            The name to be given to the .txt file storing the indices
+        """
+        # save indices to a .txt file for future use (case study)
+        with open(txt_name + ".txt", "w") as fout:
+            for ind in x_test.index:
+                fout.write(str(ind) + "\n")
+        
+    def _train_test_split_init(self) -> tuple:
         """
         Executes the division of the dataset into training and testing. Returns a
         tuple containing 4 numpy arrays: 2 arrays of features (one for training,
         other for testing) and 2 arrays of labels (one for training, other for
-        testing).
+        testing). It is used when <self.init> is set to True.
         """
-        # display state of the process on screen
-        print("Performing train-test split on the dataset...")
+        # display state of the process on screen (train-test split)
+        print("Performing 'init' train-test split on the dataset...")
         # split the dataset into features and labels
         df_feats = self._dataset.iloc[:, 1:-1]
         df_labels = self._dataset.iloc[:, -1]
@@ -127,8 +211,31 @@ class MLModel:
                                                       stratify=df_labels,
                                                       test_size=self.test_size,
                                                       random_state=self.random_state)
-        # returns tuple of numpy arrays
-        return x_trn, x_tst, np.ravel(y_trn), np.ravel(y_tst)
+        # save <x_tst> indices to a .txt file if <self.final_model> is set to True
+        if self.final_model:
+            txt_name = self.models_dir + "/test-indices-" + self._name_set
+            self._save_xtest_indices(x_tst, txt_name)
+        # return tuple of numpy arrays
+        return x_trn, x_tst, y_trn, y_tst
+    
+    def _train_test_split_cs(self) -> tuple:
+        """
+        Executes the division of the dataset into training and testing. Returns a
+        tuple containing 4 numpy arrays: 2 arrays of features (one for training,
+        other for testing) and 2 arrays of labels (one for training, other for
+        testing). It is used when <self.init> is set to False.
+        """
+        # display state of the process on screen (train-test split)
+        print("Performing 'cs' train-test split on the dataset...")
+        # read test indices
+        txt_name = "../models" + "/test-indices-" + self._name_set
+        indices = [int(line.strip()) for line in open(txt_name+".txt").readlines()]
+        # split the data into training and testing sets
+        train, test = self._dataset.drop(indices), self._dataset.take(indices)
+        x_trn, y_trn = train.iloc[:, 1:-1], train.iloc[:, -1]
+        x_tst, y_tst = test.iloc[:, 1:-1], test.iloc[:, -1]
+        # return tuple of numpy arrays
+        return x_trn, x_tst, y_trn, y_tst #np.ravel???
     
     def _scale_data(self, x_train: np.ndarray, x_test: np.ndarray) -> tuple:
         """
@@ -143,7 +250,7 @@ class MLModel:
         x_test: np.ndarray
             The feature vectors of the testing portion of the data
         """
-        # display state of the process on screen
+        # display state of the process on screen (scale data)
         print("Scaling training and testing data...")
         # initialize MinMaxScaler and fit it to <x_train>
         scaler = MinMaxScaler().fit(x_train)
@@ -179,7 +286,7 @@ class MLModel:
         x_test: np.ndarray
             The feature vectors of the testing portion of the data
         """
-        # display state of the process on screen
+        # display state of the process on screen (select features)
         print("Selecting features...")
         # fit selector on a RandomForestClassifier and retrieve support vector
         selector = SelectFromModel(estimator=RFC()).fit(x_train, y_train)
@@ -207,10 +314,10 @@ class MLModel:
         y_train: np.ndarray
             The label vector of the training portion of the data
         """
-        # display state of the process on screen
+        # display state of the process on screen (optimize hyperparameters)
         print("Optimizing hyperparameters...")
-        # select hyperparameter grid based on the selected algorithm
-        param_grid = MLModel.HYPER[self.algorithm]
+        # select hyperparameter grid based on <algorithm> and <final_model>
+        param_grid = MLModel.HYPER[self.algorithm][self.final_model]
         # initialize estimator
         estimator = self._estimator()
         # compute optimal combination of hyperparameters
@@ -220,7 +327,8 @@ class MLModel:
                             cv=StratifiedKFold(shuffle=True,
                                                random_state=self.random_state))
         grid.fit(x_train, y_train)
-        # return best combination of hyperparameters
+        # display and return best combination of hyperparameters
+        print(f"- {grid.best_params_ = }")
         return grid.best_params_
     
     def _test_model(self,
@@ -240,7 +348,7 @@ class MLModel:
         y_test: np.ndarray
             The label vector of the testing portion of the data
         """
-        # display state of the process on screen
+        # display state of the process on screen (test model)
         print(f"\nTesting {self.algorithm.upper()} model ({self._name_set})\n---")
         # compute predictions
         y_pred = model.predict(x_test)
@@ -262,16 +370,21 @@ class MLModel:
         The model is then built using these hyperparameters and the training data.
         Finally, the model is tested on the testing data.
         """
-        # display state of the process on screen
+        # display state of the process on screen (build model)
         print(f"\nBuilding {self.algorithm.upper()} model ({self._name_set})\n---")
-        # train-test split
-        x_train, x_test, y_train, y_test = self._train_test_split()
+        # train-test split (<self.init> dictates which method is called)
+        if self.init:
+            x_train, x_test, y_train, y_test = self._train_test_split_init()
+        else:
+            x_train, x_test, y_train, y_test = self._train_test_split_cs()
         # scale <x_train> and <x_test>
         x_train, x_test = self._scale_data(x_train, x_test)
         # select most important features
         x_train, x_test = self._select_features(x_train, y_train, x_test)
         # optimize hyperparameters and fit the model based on them
         params = self._optimize_hyperparameters(x_train, y_train)
+        # display state of the process on screen (fit model)
+        print("Fitting estimator on best combination of hyperparameters...")
         model = self._estimator(**params).fit(x_train, y_train)
         # save model to a .joblib file if <final_model> is set to True
         if self.final_model:
