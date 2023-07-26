@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import numpy as np
 import os
 import pandas as pd
 import time
@@ -7,8 +8,9 @@ import warnings
 from Bio import Entrez, SeqIO, Seq
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from propy import PyPro
+from tqdm.auto import tqdm
 
-# Ignore Biopyhon warnings (related to sequence translation)
+# ignore Biopyhon warnings (related to sequence translation)
 warnings.filterwarnings("ignore")
 
 class MLDataset:
@@ -17,6 +19,9 @@ class MLDataset:
     Constructs a tabular dataset by computing a set of features/descriptors associated to
     the DNA sequences present in the input .fasta file.
     """
+    
+    # INIT & REPR
+    # ---
     
     def __init__(self, file: str, prot_name: str, ttable: str, icodons: tuple) -> None:
         """
@@ -32,12 +37,19 @@ class MLDataset:
             The identifier of the translation table to be used
         icodons: tuple
             A tuple of possible initiation codons given the table <ttable>
+            
+        Attributes
+        ----------
+        _bad_inds: list
+            A list object storing indices of unfeaturized sequence records
         """
         # parameters
         self.file = file
         self.prot_name = prot_name
         self.ttable = ttable
         self.icodons = icodons
+        # attributes
+        self._bad_inds = []
         
     def __repr__(self) -> str:
         """
@@ -46,6 +58,9 @@ class MLDataset:
         c = self.__class__.__name__
         r = f"{c}({self.file!r}, {self.prot_name!r}, {self.ttable!r}, {self.icodons!r})"
         return r
+    
+    # TRANSLATE AND VALIDATE SEQUENCE
+    # ---
     
     def _translate_seq(self, seq: Seq.Seq) -> Seq.Seq:
         """
@@ -68,7 +83,7 @@ class MLDataset:
         return tseq
     
     @staticmethod
-    def _get_valid_protein(seq: Seq.Seq) -> Seq.Seq:
+    def _get_valid_protein(tseq: Seq.Seq) -> Seq.Seq:
         """
         Returns a valid protein sequence from the sequence it takes as input (substitutes
         invalid characters for the empty string).
@@ -78,11 +93,14 @@ class MLDataset:
         seq: Seq.Seq
             The protein sequence to be validated
         """
-        invalid_chars = "*BJOUWXZ"
-        for c in invalid_chars:
-            seq = seq.replace(c, "")
-        return seq
-        
+        non_valid_chars = "*BJOUXZ"
+        for c in non_valid_chars:
+            tseq = tseq.replace(c, "")
+        return tseq
+    
+    # COMPUTE SEQUENCE DESCRIPTORS
+    # ---
+            
     @staticmethod
     def _nuc_composition(seq: Seq.Seq) -> dict:
         """
@@ -218,51 +236,75 @@ class MLDataset:
         """
         return PyPro.GetProDes(seq).GetCTD()
     
-    # maybe do not consider these descriptors (to long to compute)
+    # BUILD DATASET ENTRY FROM SEQUENCE
     # ---
+        
     @staticmethod
-    def _geary_autocorrelation(seq: Seq.Seq) -> dict:
+    def _build_entry(seq: Seq.Seq, tseq: Seq.Seq) -> dict:
         """
-        Returns a dictionary containing the Geary autocorrelation descriptors of the
-        protein sequence it takes as input.
+        Given a sequence of aminoacids, it builds and returns an entry to be added to the
+        dataset of featurized sequences.
         
         Parameters
         ----------
         seq: Seq.Seq
-            The protein sequence
+            The DNA sequence which translates to the protein sequence
+        tseq: Seq.Seq
+            The sequence of aminoacids
         """
-        return PyPro.GetProDes(seq).GetGearyAuto()
+        return {"Len-Protein": len(tseq),
+                **MLDataset._nuc_composition(seq.seq),
+                **MLDataset._amino_composition(tseq),
+                **MLDataset._dipeptide_composition(tseq),
+                **MLDataset._molecular_weight(tseq),
+                **MLDataset._aromaticity(tseq),
+                **MLDataset._instability_index(tseq),
+                **MLDataset._isoelectric_point(tseq),
+                **MLDataset._molar_extinction_coefficient(tseq),
+                **MLDataset._secondary_structure_fraction(tseq),
+                **MLDataset._ctd_descriptors(tseq)}
+        
+    # ADD ENTRY TO DATASET AND BUILD FINAL DATAFRAME
+    # ---
+        
+    @staticmethod
+    def _add_entry(dataset: pd.DataFrame, entry: dict, id_seq: int) -> pd.DataFrame:
+        """
+        Adds an entry <entry> to the dataset <dataset> at index <id_seq>. The pd.DataFrame
+        parameter "dtype" is set to np.float32 to reduce RAM usage.
+        
+        Parameters
+        ----------
+        dataset: pd.DataFrame
+            A dataset of featurized sequences
+        entry: dict
+            The entry to be added to <dataset>
+        id_seq: int
+            The index at which the new entry is to be added
+        """
+        idx = range(id_seq, id_seq+1)
+        df_entry = pd.DataFrame(entry, index=idx, dtype=np.float32)
+        new_df = pd.concat([dataset, df_entry])
+        return new_df
     
-    # maybe do not consider these descriptors (to long to compute)
-    # ---
-    @staticmethod
-    def _moran_autocorrelation(seq: Seq.Seq) -> dict:
-        """
-        Returns a dictionary containing the Moran autocorrelation descriptors of the
-        protein sequence it takes as input.
-        
-        Parameters
-        ----------
-        seq: Seq.Seq
-            The protein sequence
-        """
-        return PyPro.GetProDes(seq).GetMoranAuto()
+    #@staticmethod
+    #def _build_final_df(datasets: list) -> pd.DataFrame:
+    #    """
+    #    Builds and returns a the final version of the dataframe from a list of datasets.
+    #    
+    #    Parameters
+    #    ----------
+    #    datasets: list
+    #        The list of datasets
+    #    """
+    #    df_out = pd.DataFrame()
+    #    for dataset in tqdm(datasets):
+    #        df_out = pd.concat([df_out, dataset])
+    #    return df_out
     
-    # maybe do not consider these descriptors (to long to compute)
+    # BUILD_DATASET
     # ---
-    @staticmethod
-    def _moreau_broto_autocorrelation(seq: Seq.Seq) -> dict:
-        """
-        Returns a dictionary containing the Moreau-Broto autocorrelation descriptors of
-        the protein sequence it takes as input.
-        
-        Parameters
-        ----------
-        seq: Seq.Seq
-            The protein sequence
-        """
-        return PyPro.GetProDes(seq).GetMoreauBrotoAuto()
-
+            
     def build_dataset(self) -> pd.DataFrame:
         """
         Returns a tabular dataset (represented by a pd.DataFrame) containing the featurized
@@ -272,45 +314,42 @@ class MLDataset:
         - sequence length (1 feature), nucleotide composition (4 features), aminoacid
         composition (20 features), dipeptide composition (400 features), molecular weight
         (1 feature), aromaticity (1 feature), instability index (1 feature), isoelectric
-        point (1 feature), molar extinctioncoefficient (2 features), secondary structure
-        fraction (3 features), ctd descriptors (147 features), geary autocorrelation
-        descriptors (240 features), moran autocorrelation descriptors (240 features),
-        moreau-broto autocorrelation descriptors (240 features)
+        point (1 feature), molar extinction coefficient (2 features), secondary structure
+        fraction (3 features), ctd descriptors (147 features)
         ---
-        Total number of features: 581 (1301 including autocorrelation descriptors)
+        Total number of features: 581
         """
-        # initialize dataset
-        dataset = []
+        # initialize <datasets> and <dataset>
+        datasets = []
+        dataset = pd.DataFrame()
         # read sequences present in <file>
         sequences = SeqIO.parse(self.file, format="fasta")
         # iterate through sequences and build dataset
-        for i, seq in enumerate(sequences):
-            # translate DNA sequence
+        for i, seq in tqdm(enumerate(sequences)):
+            # append <dataset> to <datasets> and reinitialize <dataset> every 5000 sequences
+            # (speedup the concatenation of dataset and entry -> the largest the dataset,
+            # the longer it takes to concatenate, since a copy of it has to be created)
+            if i % 5000 == 0:
+                datasets.append(dataset)
+                dataset = pd.DataFrame()
+            # translate DNA sequence and get rid of non valid symbols (*BJOUXZ)
             tseq = self._translate_seq(seq.seq)
-            # probably temporary -> get rid of unwanted symbols in the sequence
-            #                       it may be kept (there are few problematic sequences)
-            tseq = MLDataset._get_valid_protein(tseq)
-            # build entry by computing sequence descriptors
-            entry = {"Len-Protein": len(tseq),
-                     **MLDataset._nuc_composition(seq.seq),
-                     **MLDataset._amino_composition(tseq),
-                     **MLDataset._dipeptide_composition(tseq),
-                     **MLDataset._molecular_weight(tseq),
-                     **MLDataset._aromaticity(tseq),
-                     **MLDataset._instability_index(tseq),
-                     **MLDataset._isoelectric_point(tseq),
-                     **MLDataset._molar_extinction_coefficient(tseq),
-                     **MLDataset._secondary_structure_fraction(tseq),
-                     **MLDataset._ctd_descriptors(tseq)} #,
-                     #**MLDataset._geary_autocorrelation(tseq),
-                     #**MLDataset._moran_autocorrelation(tseq),
-                     #**MLDataset._moreau_broto_autocorrelation(tseq)}
-            # add "entry" to "dataset"
-            dataset.append(entry)
-        # build pd.DataFrame from "dataset"
-        df_out = pd.DataFrame(dataset)
-        # add label column to the dataframe
-        df_out["Function"] = [self.prot_name] * (i+1)
-        # return df containing the featurized records
+            tseq = MLDataset._get_valid_protein(tseq=tseq)
+            # build entry by computing sequence descriptors and add it to <dataset>
+            try:
+                entry = MLDataset._build_entry(seq, tseq)
+            except:
+                self._bad_inds.append(i)
+                name_prot = " | ".join(seq.description.split(" | ")[2:])
+                print(f"Featurization failed for {name_prot!r} sequence...")
+            else:    
+                dataset = MLDataset._add_entry(dataset, entry, i)
+        # append last dataset to <datasets> (no problem if <dataset> is empty)
+        # datasets.append(dataset) <----
+        # build pd.DataFrame from the list of datasets
+        df_out = pd.concat(datasets + [dataset])
+        # df_out = MLDataset._build_final_df(datasets=datasets) <----
+        # add label column to the dataframe and return it
+        df_out["Function"] = [self.prot_name] * (i+1 - len(self._bad_inds))
         return df_out
         
