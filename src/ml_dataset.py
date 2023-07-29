@@ -287,21 +287,6 @@ class MLDataset:
         new_df = pd.concat([dataset, df_entry])
         return new_df
     
-    #@staticmethod
-    #def _build_final_df(datasets: list) -> pd.DataFrame:
-    #    """
-    #    Builds and returns a the final version of the dataframe from a list of datasets.
-    #    
-    #    Parameters
-    #    ----------
-    #    datasets: list
-    #        The list of datasets
-    #    """
-    #    df_out = pd.DataFrame()
-    #    for dataset in tqdm(datasets):
-    #        df_out = pd.concat([df_out, dataset])
-    #    return df_out
-    
     # BUILD_DATASET
     # ---
             
@@ -344,11 +329,8 @@ class MLDataset:
                 print(f"Featurization failed for {name_prot!r} sequence...")
             else:    
                 dataset = MLDataset._add_entry(dataset, entry, i)
-        # append last dataset to <datasets> (no problem if <dataset> is empty)
-        # datasets.append(dataset) <----
         # build pd.DataFrame from the list of datasets
         df_out = pd.concat(datasets + [dataset])
-        # df_out = MLDataset._build_final_df(datasets=datasets) <----
         # add label column to the dataframe and return it
         df_out["Function"] = [self.prot_name] * (i+1 - len(self._bad_inds))
         return df_out
