@@ -21,7 +21,7 @@ from sklearn.feature_selection import SelectFromModel
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import precision_score, recall_score
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
+from sklearn.model_selection import GridSearchCV # StratifiedKFold <----
 from sklearn.preprocessing import MinMaxScaler
 
 # ignore sklearn warnings
@@ -291,6 +291,8 @@ class MLModel:
         # fit selector on a RandomForestClassifier and retrieve support vector
         selector = SelectFromModel(estimator=RFC()).fit(x_train, y_train)
         support_vector = selector.get_support()
+        # display number of selected features
+        print(f"- num_selected = {len(support_vector[support_vector==True])}")
         # save support vector to a .joblib file if <final_model> is set to True
         if self.final_model:
             support_name = self.models_dir + "/support-" + self._name_set
@@ -318,18 +320,24 @@ class MLModel:
         print("Optimizing hyperparameters...")
         # select hyperparameter grid based on <algorithm> and <final_model>
         param_grid = MLModel.HYPER[self.algorithm][self.final_model]
-        # initialize estimator
-        estimator = self._estimator()
-        # compute optimal combination of hyperparameters
-        grid = GridSearchCV(estimator=estimator,
-                            param_grid=param_grid,
-                            # by default, n_splits=5
-                            cv=StratifiedKFold(shuffle=True,
-                                               random_state=self.random_state))
-        grid.fit(x_train, y_train)
+        # skip optimization if <param_grid> is empty (avoids unnecessary fit)
+        if not param_grid:
+            best_params = {}
+        # otherwise, determine optimal combination of hyperparameters
+        else:
+            # (cv: "For integer/None inputs, if the estimator is a classifier and y is
+            # either binary or multiclass, StratifiedKFold is used. In all other cases,
+            # KFold is used. These splitters are instantiated with shuffle=False so the
+            # splits will be the same across calls.")
+            grid = GridSearchCV(estimator=self._estimator(),
+                                param_grid=param_grid,
+                                scoring="f1_macro",
+                                refit=False).fit(x_train, y_train)
+            # assign <grid.best_params_> to <best_params> to match the first case
+            best_params = grid.best_params_
         # display and return best combination of hyperparameters
-        print(f"- {grid.best_params_ = }")
-        return grid.best_params_
+        print(f"- {best_params = }")
+        return best_params
     
     def _test_model(self,
                     model: BaseEstimator,
@@ -383,12 +391,12 @@ class MLModel:
         x_train, x_test = self._select_features(x_train, y_train, x_test)
         # optimize hyperparameters and fit the model based on them
         params = self._optimize_hyperparameters(x_train, y_train)
-        # display state of the process on screen (fit model)
+        # fit model on the best combination of hyperparamters
         print("Fitting estimator on best combination of hyperparameters...")
         model = self._estimator(**params).fit(x_train, y_train)
         # save model to a .joblib file if <final_model> is set to True
         if self.final_model:
             model_name = self.models_dir + "/model-" + self._name_set
             joblib.dump(model, model_name+".joblib")
-        # test the fitted estimator on the testing data
+        # test the fitted estimator (model) on the testing data
         self._test_model(model, x_test, y_test)
