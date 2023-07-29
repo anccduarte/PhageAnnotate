@@ -37,33 +37,46 @@ def get_dna_modification(only_terms: bool = False) -> None:
         Whether to only get the terms associated to the functional class
     """
     # terms for DNA modification proteins
-    terms = {"nuclease": ["hnh endonuclease", "exonuclease", "hnh homing endonuclease",
-                          "cas4 family exonuclease", "putative exonuclease", "putative hnh endonuclease",
-                          "endonuclease", "homing endonuclease", "nuclease", "endonuclease vii",
-                          "putative homing endonuclease", "restriction endonuclease",
-                          "pd-(d/e)xk nuclease superfamily protein", "recombination endonuclease vii",
-                          "intron associated endonuclease", "exonuclease",
-                          "hnh endonuclease bacteriophage, hnh endonuclease, dna.52a"],
-             "deaminase": ["deoxycytidylate deaminase", "dcmp deaminase", "deaminase"],
+    terms = {"nuclease":             ["hnh endonuclease", "exonuclease", "hnh homing endonuclease",
+                                      "cas4 family exonuclease", "putative exonuclease", "putative hnh endonuclease",
+                                      "endonuclease", "homing endonuclease", "nuclease", "endonuclease vii",
+                                      "putative homing endonuclease", "restriction endonuclease",
+                                      "pd-(d/e)xk nuclease superfamily protein", "recombination endonuclease vii",
+                                      "intron associated endonuclease", "exonuclease",
+                                      "hnh endonuclease bacteriophage, hnh endonuclease, dna.52a"],
+             # ---
+             "deaminase":            ["deoxycytidylate deaminase", "dcmp deaminase", "deaminase"],
+             # ---
              "thymidylate synthase": ["thymidylate synthase"],
-             "dUTPase": ["dutpase"],
-             "kinase": ["polynucleotide kinase", "thymidine kinase", "deoxynucleoside monophosphate kinase",
-                        "nucelotide kinase", "kinase"],
-             "phosphoesterase": ["metallophosphoesterase", "phosphoesterase"],
-             "reductase": ["dihydrofolate reductase", "ribonucleotide reductase",
-                           "anaerobic ribonucleoside triphosphate reductase",
-                           "phosphoadenosine-phosphosulfate reductase", "reductase"],
-             "methylase": ["dna methylase", "adenine-specific methyltransferase", "dna adenine methylase",
-                           "cytosine specific methyltransferase", "dna n-6-adenine-methyltransferase",
-                           "methylase"],
-             "ATPase": ["atpase"],
-             "nucleotidohydrolase": ["nucleotidohydrolase", "deoxyuridine 5'-triphosphate nucleotidohydrolase"],
-             "transferase": ["nucleotidyltransferase", "glycosyltransferase", "methyltransferase",
-                             "adenine specific dna methyltransferase", "transferase"],
-             "phosphohydrolase": ["nucleoside triphosphate pyrophosphohydrolase", "phosphohydrolase"],
-             "glutaredoxin": ["glutaredoxin"],
-             "ribonuclease": ["endodeoxyribonuclease i", "endodeoxyribonuclease rusa", "endodeoxyribonuclease",
-                              "ribonuclease"]}
+             # ---
+             "dUTPase":              ["dutpase"],
+             # ---
+             "kinase":               ["polynucleotide kinase", "thymidine kinase", "nucelotide kinase", "kinase",
+                                      "deoxynucleoside monophosphate kinase"],
+             # ---
+             "phosphoesterase":      ["metallophosphoesterase", "phosphoesterase"],
+             # ---
+             "reductase":            ["dihydrofolate reductase", "ribonucleotide reductase",
+                                      "anaerobic ribonucleoside triphosphate reductase", "reductase",
+                                      "phosphoadenosine-phosphosulfate reductase"],
+             # ---
+             "methylase":            ["dna methylase", "adenine-specific methyltransferase",
+                                      "dna adenine methylase", "cytosine specific methyltransferase",
+                                      "dna n-6-adenine-methyltransferase", "methylase"],
+             # ---
+             "ATPase":               ["atpase"],
+             # ---
+             "nucleotidohydrolase":  ["nucleotidohydrolase", "deoxyuridine 5'-triphosphate nucleotidohydrolase"],
+             # ---
+             "transferase":          ["nucleotidyltransferase", "glycosyltransferase", "methyltransferase",
+                                      "adenine specific dna methyltransferase", "transferase"],
+             # ---
+             "phosphohydrolase":     ["nucleoside triphosphate pyrophosphohydrolase", "phosphohydrolase"],
+             # ---
+             "glutaredoxin":         ["glutaredoxin"],
+             # ---
+             "ribonuclease":         ["endodeoxyribonuclease i", "endodeoxyribonuclease rusa", "ribonuclease",
+                                      "endodeoxyribonuclease"]}
     if not only_terms:
         # get DNA sequences coding for DNA modification proteins
         get_sequences(db=BASE_DIR+"dna_modification", terms=terms, negatives=False)
@@ -83,19 +96,25 @@ def get_dna_replication(only_terms: bool = False) -> None:
         Whether to only get the terms associated to the functional class
     """
     # terms for DNA replication proteins
-    terms = {"transcription factor": ["whib family transcription factor", "transcriptional regulator",
-                                      "putative transcriptional regulator", "regulatory protein",
-                                      "ecf sigma factor", "transcription factor"],
-             "DNA primase-helicase": ["dna helicase", "dna primase/helicase", "dna primase",
-                                      "putative helicase", "helicase", "dnab-like replicative helicase",
-                                      "replicative dna helicase", "dnab-like dsdna helicase", "dsdna helicase",
-                                      "replicative helicase", "helicase of the snf2 rad54 family", "primase"],
-             "RNA polymerase": ["dna-directed rna polymerase", "rna polymerase sigma factor", "rna polymerase",
-                                "rna dependent rna polymerase"],
-             "DNA ligase": ["dna ligase"],
-             "DNA polymerase": ["dna polymerase i", "dna polymerase", "dna polymerase b"],
-             "RNA ligase": ["rna ligase"],
-             "replication initiation protein": ["replication initiation protein"]}
+    terms = {"transcription factor":   ["whib family transcription factor", "transcriptional regulator",
+                                        "putative transcriptional regulator", "regulatory protein",
+                                        "ecf sigma factor", "transcription factor"],
+             # ---
+             "DNA primase-helicase":   ["dna helicase", "dna primase/helicase", "dna primase",
+                                        "putative helicase", "helicase", "dnab-like replicative helicase",
+                                        "replicative dna helicase", "dnab-like dsdna helicase", "dsdna helicase",
+                                        "replicative helicase", "helicase of the snf2 rad54 family", "primase"],
+             # ---
+             "RNA polymerase":         ["dna-directed rna polymerase", "rna polymerase sigma factor",
+                                        "rna polymerase", "rna dependent rna polymerase"],
+             # ---
+             "DNA ligase":             ["dna ligase"],
+             # ---
+             "DNA polymerase":         ["dna polymerase i", "dna polymerase", "dna polymerase b"],
+             # ---
+             "RNA ligase":             ["rna ligase"],
+             # ---
+             "replication initiation": ["replication initiation protein"]}
     if not only_terms:
         # get DNA sequences coding for DNA replication proteins
         get_sequences(db=BASE_DIR+"dna_replication", terms=terms, negatives=False)
@@ -116,8 +135,10 @@ def get_lysis(only_terms: bool = False) -> None:
     # terms for lysis proteins
     terms = {"endolysin": ["n-acetylmuramoyl-l-alanine amidase", "endolysin", "peptidoglycan hydrolase",
                            "cell wall hydrolase autolysin"],
-             "holin": ["holin", "putative holin", "holin protein"],
-             "spanin": ["rz-like spanin", "spanin", "i-spanin", "o-spanin", "u-spanin", "rz", "rz1"]}
+             # ---
+             "holin":     ["holin", "putative holin", "holin protein"],
+             # ---
+             "spanin":    ["rz-like spanin", "spanin", "i-spanin", "o-spanin", "u-spanin", "rz", "rz1"]}
     if not only_terms:
         # get DNA sequences coding for lysis proteins
         get_sequences(db=BASE_DIR+"lysis", terms=terms, negatives=False)
@@ -137,14 +158,19 @@ def get_lysogeny_repressor(only_terms: bool = False) -> None:
         Whether to only get the terms associated to the functional class
     """
     # terms for lysogeny/repressor proteins
-    terms = {"integrase": ["integrase", "tyrosine integrase"],
-             "recombinase": ["site specific recombinase xerd", "recombinase", "recombination protein",
-                             "ninb protein", "rect protein", "ning recombination protein"],
-             "repressor": ["immunity repressor", "repressor protein ci", "repressor protein",
-                           "transcriptional repressor", "repressor domain protein",
-                           "sos-response transcriptional repressor", "repressor"],
-             "resolvase": ["holliday junction resolvase", "resolvase"],
-             "transposase": ["transposase"],
+    terms = {"integrase":     ["integrase", "tyrosine integrase"],
+             # ---
+             "recombinase":   ["site specific recombinase xerd", "recombinase", "recombination protein",
+                               "ninb protein", "rect protein", "ning recombination protein"],
+             # ---
+             "repressor":     ["immunity repressor", "repressor protein ci", "repressor protein",
+                               "transcriptional repressor", "repressor domain protein",
+                               "sos-response transcriptional repressor", "repressor"],
+             # ---
+             "resolvase":     ["holliday junction resolvase", "resolvase"],
+             # ---
+             "transposase":   ["transposase"],
+             # ---
              "antirepressor": ["antirepressor protein", "antirepressor"]}
     if not only_terms:
         # get DNA sequences coding for lysogeny/repressor proteins
@@ -165,6 +191,7 @@ def get_packaging(only_terms: bool = False) -> None:
     """
     # terms for packaging proteins
     terms = {"large terminase": ["terminase large subunit", "large terminase", "large subunit terminase"],
+             # ---
              "small terminase": ["terminase small subunit", "putative terminase small subunit",
                                  "small terminase"]}
     if not only_terms:
@@ -185,35 +212,46 @@ def get_structural(only_terms: bool = False) -> None:
         Whether to only get the terms associated to the functional class
     """
     # terms for structural proteins
-    terms = {"minor tail": ["minor tail protein", "minor tail"],
-             "major tail": ["major tail protein", "major tail"],
-             "portal": ["portal protein", "putative portal protein", "portal"],
+    terms = {"minor tail":   ["minor tail protein", "minor tail"],
+             # ---
+             "major tail":   ["major tail protein", "major tail"],
+             # ---
+             "portal":       ["portal protein", "putative portal protein", "portal"],
+             # ---
              "minor capsid": ["minor capsid protein", "minor head protein", "minor capsid component",
                               "minor capsid protein from bacteriophage", "minor capsid"],
+             # ---
              "major capsid": ["major capsid protein", "major head protein", "major capsid"],
-             "head-tail": ["head-to-tail adaptor", "head-to-tail stopper", "tail terminator",
-                           "head-tail connector protein", "tail completion protein",
-                           "tail tape measure protein", "tail length tape measure protein",
-                           "tail length tape-measure protein", "head-tail adaptor", "tail tube protein",
-                           "distal tail protein", "internal virion protein", "head fiber protein",
-                           "tail completion or neck1 protein", "head-tail adaptor ad1",
-                           "putative tail component", "head completion protein", "tail tape measure",
-                           "tail component", "tail collar fiber protein", "tail connector protein",
-                           "putative head tail adaptor", "head to tail adaptor", "tail tubular protein",
-                           "head tail connector", "head tail connector protein", "head tail", "head-tail",
-                           "head tail protein", "head-tail protein"],
-             "tail fiber": ["tail fibers protein", "tail fiber protein", "putative tail protein",
-                            "putative tail fiber protein", "tail protein", "43 kda tail protein",
-                            "tail fiber", "tail fibre", "tail fibre protein"],
-             "tail sheath": ["tail sheath protein", "tail sheath", "putative phage tail sheath protein",
-                             "tail shaft"],
-             "baseplate": ["baseplate protein", "baseplate wedge subunit", "baseplate hub",
-                           "baseplate assembly protein", "baseplate wedge protein", "baseplate hub subunit",
-                           "baseplate j like protein", "baseplate"],
-             "neck": ["neck protein", "type i neck protein", "neck", "pre-neck appendage"],
-             "collar": ["upper collar protein", "lower collar protein", "collar", "collar protein"],
-             "tailspike": ["tailspike", "tail spike", "tail-spike", "tailspike protein", "tail spike protein",
-                           "tail-spike protein"]}
+             # ---
+             "head-tail":    ["head-to-tail adaptor", "head-to-tail stopper", "tail terminator",
+                              "head-tail connector protein", "tail completion protein",
+                              "tail tape measure protein", "tail length tape measure protein",
+                              "tail length tape-measure protein", "head-tail adaptor", "tail tube protein",
+                              "distal tail protein", "internal virion protein", "head fiber protein",
+                              "tail completion or neck1 protein", "head-tail adaptor ad1",
+                              "putative tail component", "head completion protein", "tail tape measure",
+                              "tail component", "tail collar fiber protein", "tail connector protein",
+                              "putative head tail adaptor", "head to tail adaptor", "tail tubular protein",
+                              "head tail connector", "head tail connector protein", "head tail", "head-tail",
+                              "head tail protein", "head-tail protein"],
+             # ---
+             "tail fiber":   ["tail fibers protein", "tail fiber protein", "putative tail protein",
+                              "putative tail fiber protein", "tail protein", "43 kda tail protein",
+                              "tail fiber", "tail fibre", "tail fibre protein"],
+             # ---
+             "tail sheath":  ["tail sheath protein", "tail sheath", "putative phage tail sheath protein",
+                              "tail shaft"],
+             # ---
+             "baseplate":    ["baseplate protein", "baseplate wedge subunit", "baseplate hub",
+                              "baseplate assembly protein", "baseplate wedge protein", "baseplate hub subunit",
+                              "baseplate j like protein", "baseplate"],
+             # ---
+             "neck":         ["neck protein", "type i neck protein", "neck", "pre-neck appendage"],
+             # ---
+             "collar":       ["upper collar protein", "lower collar protein", "collar", "collar protein"],
+             # ---
+             "tailspike":    ["tailspike", "tail spike", "tail-spike", "tailspike protein", "tail spike protein",
+                              "tail-spike protein"]}
     if not only_terms:
         # get DNA sequences coding for structural proteins
         get_sequences(db=BASE_DIR+"structural", terms=terms, negatives=False)
@@ -234,17 +272,17 @@ def get_hypothetical(only_terms: bool = False) -> None:
         Whether to only get the terms associated to the functional class
     """
     # terms for hypothetical proteins
-    terms = {"hypothetical protein": ["hypothetical", "hypothetical protein", "conserved hypothetical protein",
-                                      "protein of unknown function", "protein of unknown function duf859",
-                                      "protein of unknown function", "protein of unknown function (duf551)",
-                                      "unknown", "unknown function", "protein of unknown function (duf1492)",
-                                      "protein of unknown function (duf4376)", "protein of unknown function (duf1351)",
-                                      "protein of unknown function (duf2634)", "protein of unknown function (duf2577)",
-                                      "protein of unknown function (duf1018)", "protein of unknown function (duf2612)",
-                                      "protein of unknown function (duf2829)", "protein of unknown function (duf722)",
-                                      "protein of unknown function (duf4969)", "protein of unknown function duf1424",
-                                      "protein of unknown function (duf669)", "protein of unknown function (duf1642)",
-                                      "protein of unknown function (duf1366)"]}
+    terms = {"hypothetical": ["hypothetical", "hypothetical protein", "conserved hypothetical protein",
+                              "protein of unknown function", "protein of unknown function duf859",
+                              "protein of unknown function", "protein of unknown function (duf551)",
+                              "unknown", "unknown function", "protein of unknown function (duf1492)",
+                              "protein of unknown function (duf4376)", "protein of unknown function (duf1351)",
+                              "protein of unknown function (duf2634)", "protein of unknown function (duf2577)",
+                              "protein of unknown function (duf1018)", "protein of unknown function (duf2612)",
+                              "protein of unknown function (duf2829)", "protein of unknown function (duf722)",
+                              "protein of unknown function (duf4969)", "protein of unknown function duf1424",
+                              "protein of unknown function (duf669)", "protein of unknown function (duf1642)",
+                              "protein of unknown function (duf1366)"]}
     if not only_terms:
         # get DNA sequences coding for hypothetical proteins
         get_sequences(db=BASE_DIR+"hypothetical", terms=terms, negatives=False)
@@ -296,7 +334,7 @@ if __name__ == "__main__":
     
     # check whether <class_> is valid (2)
     options = ["dna-modification", "dna-replication", "lysis", "lysogeny-repressor", "packaging",
-               "structural", "hypothetical", "miscellaneous"] # "other"
+               "structural", "hypothetical", "miscellaneous"]
     if class_ not in options:
         raise ValueError(f"'{class_}' is not a valid class. Choose one of {{{', '.join(options)}}}.")
         
