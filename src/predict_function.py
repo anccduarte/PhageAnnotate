@@ -23,6 +23,7 @@ class PredictFunction:
     def __init__(self,
                  path: str,
                  models_dir: str,
+                 thresholds: list,
                  ttable: str,
                  icodons: tuple) -> None:
         """
@@ -34,6 +35,9 @@ class PredictFunction:
             The path to the .fasta file
         models_dir: str
             The name of the directory containing the models
+        thresholds: list
+            A list of two thresholds: the first relative to the functional class, the
+            second relative to the specific function
         ttable: str
             The identifier of the translation table to be used
         icodons: tuple
@@ -51,6 +55,7 @@ class PredictFunction:
         # parameters
         self.path = path
         self.models_dir = models_dir
+        self.thresholds = thresholds
         self.ttable = ttable
         self.icodons = icodons
         # attributes
@@ -67,7 +72,6 @@ class PredictFunction:
         class_ = self.__class__.__name__
         return f"{class_}({self.path!r})"
         
-    #@staticmethod
     def _load(self) -> tuple:
         """
         Loads and returns the models, scalers and support vectors corresponding to
@@ -206,12 +210,13 @@ class PredictFunction:
         in <X_pred> (each representing a DNA sequence). Returns a tuple of two lists
         containing the predictions.
         """
-        # get featurized dataset
+        # get featurized dataset and probability thresholds
         X_pred = self._get_dataset()
+        thresh1, thresh2 = self.thresholds
         # predict functional class
-        func_class = self._predict_func_class(X_pred, 0.9)
+        func_class = self._predict_func_class(X_pred, thresh1)
         # predict function based on the functional class of each protein
-        preds_func = self._predict_function(X_pred, func_class, 0.9)
+        preds_func = self._predict_function(X_pred, func_class, thresh2)
         # return predictions
         return func_class, preds_func
 
