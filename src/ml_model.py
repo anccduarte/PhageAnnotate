@@ -21,7 +21,7 @@ from sklearn.feature_selection import SelectFromModel
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import precision_score, recall_score
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV # StratifiedKFold <----
+from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import MinMaxScaler
 
 # ignore sklearn warnings
@@ -155,8 +155,6 @@ class MLModel:
         data_path: str
             The path to the .csv file containing the data feeding the model
         """
-        # display state of the process on screen (read data)
-        print(f"\nReading data from {data_path!r}...")
         # construct mapping for data types
         map_ = collections.defaultdict(lambda: np.float32)
         map_["Function"] = object
@@ -235,7 +233,7 @@ class MLModel:
         x_trn, y_trn = train.iloc[:, 1:-1], train.iloc[:, -1]
         x_tst, y_tst = test.iloc[:, 1:-1], test.iloc[:, -1]
         # return tuple of numpy arrays
-        return x_trn, x_tst, y_trn, y_tst #np.ravel???
+        return x_trn, x_tst, y_trn, y_tst
     
     def _scale_data(self, x_train: np.ndarray, x_test: np.ndarray) -> tuple:
         """
@@ -288,15 +286,19 @@ class MLModel:
         """
         # display state of the process on screen (select features)
         print("Selecting features...")
-        # fit selector on a RandomForestClassifier and retrieve support vector
-        selector = SelectFromModel(estimator=RFC()).fit(x_train, y_train)
-        support_vector = selector.get_support()
+        # compute and save support vector for feature selection if non existent;
+        # otherwise, load it from the appropriate .joblib file
+        support_name = self.models_dir + "/support-" + self._name_set
+        if os.path.exists(support_name+".joblib"):
+            support_vector = joblib.load(support_name+".joblib")
+        else:
+            selector = SelectFromModel(estimator=RFC(n_estimators=200,
+                                                     criterion="entropy"))
+            selector.fit(x_train, y_train)
+            support_vector = selector.get_support()
+            joblib.dump(support_vector, support_name+".joblib")
         # display number of selected features
         print(f"- num_selected = {len(support_vector[support_vector==True])}")
-        # save support vector to a .joblib file if <final_model> is set to True
-        if self.final_model:
-            support_name = self.models_dir + "/support-" + self._name_set
-            joblib.dump(support_vector, support_name+".joblib")
         # return shrunken versions of <x_train> and <x_test>
         return x_train[:, support_vector], x_test[:, support_vector]
     
@@ -306,8 +308,8 @@ class MLModel:
         """
         Computes the best combination of hyperparameters, for a given estimator and
         training set, by fitting a GridSearchCV object. Returns a dictionary object
-        whose keys are the names of the hyperparameters and whose values are the
-        best value found for the respective hyperparameter.
+        whose keys are the names of the hyperparameters and whose values are the best
+        value found for the respective hyperparameter.
         
         Parameters
         ----------
