@@ -21,6 +21,7 @@ src/sub/results_tmhmm
 # ---
 database/
 database_cs/
+_models/
 models/
 models_cs/
 results/
