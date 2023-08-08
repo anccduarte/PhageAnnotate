@@ -21,8 +21,10 @@ from sklearn.feature_selection import SelectFromModel
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import precision_score, recall_score
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import MinMaxScaler
+# skopt
+from skopt import BayesSearchCV
+from skopt.space import Categorical, Integer, Real
 
 # ignore sklearn warnings
 warnings.filterwarnings("ignore")
@@ -42,48 +44,42 @@ class MLModel:
              "support-vector-machine": SVC,
              "decision-tree": DTC}
     
-    HYPER = {"gradient-boosting": {0: {"max_iter": [100, 150, 200]},
-                                   1: {"learning_rate": [0.05, 0.1, 0.2],
-                                       "max_iter": [100, 150, 200],
-                                       "max_leaf_nodes": [15, 31, 63],
-                                       "min_samples_leaf": [10, 20, 30]}},
+    HYPER = {"gradient-boosting": {"learning_rate": Real(0.05, 0.2), # [0.05, 0.1, 0.2]
+                                   "max_iter": Integer(100, 300), # [100, 150, 200]
+                                   "max_leaf_nodes": Integer(15, 63), # [15, 31, 63]
+                                   "min_samples_leaf": Integer(10, 30)}, # [10, 20, 30]
              # ---
-             "random-forest": {0: {}, # no optimization
-                               1: {"n_estimators": [100, 150, 200],
-                                   "criterion": ["gini", "entropy"],
-                                   "min_samples_split": [2, 3, 4],
-                                   "min_samples_leaf": [1, 2],
-                                   "max_features": ["sqrt", "log2"]}},
+             "random-forest": {"n_estimators": Integer(100, 300), # [100, 150, 200]
+                               "criterion": Categorical(["gini", "entropy"]),
+                               "min_samples_split": Integer(2, 5), # [2, 3, 4]
+                               "min_samples_leaf": Integer(1, 3), # [1, 2]
+                               "max_features": Categorical(["sqrt", "log2"])},
              # ---
-             "naive-bayes": {0: {}, # no optimization
-                             1: {}}, # no optimization
+             "naive-bayes": {}, # no optimization
              # ---
-             "k-nearest-neighbors": {0: {}, # no optimization
-                                     1: {"n_neighbors": [5, 8, 10],
-                                         "algorithm": ["ball_tree", "kd_tree"], # stoch
-                                         "p": [1, 2]}}, # p -> minkowski power
+             "k-nearest-neighbors": {"n_neighbors": Integer(3, 8),
+                                     "algorithm": Categorical(["ball_tree", # stochastic
+                                                               "kd_tree", # stochastic
+                                                               "brute"]),
+                                     "p": Integer(1, 2)}, # p -> minkowski power
              # ---
-             "neural-network": {0: {"max_iter": [500, 1000, 2000]},
-                                1: {"hidden_layer_sizes": [(100,), # 1 hidden layer
-                                                           (100, 50), # 2 hidden layers
-                                                           (100, 50, 20)], # 3 hidden
-                                    "activation": ["relu", "tanh"],
-                                    "solver": ["adam", "sgd"],
-                                    "learning_rate": ["constant", "invscaling"],
-                                    "max_iter": [500, 1000, 2000],
-                                    "learning_rate_init": [0.001, 0.005],
-                                    "early_stopping": [False, True]}},
+             "neural-network": {"hidden_layer_sizes": Categorical([(100,), # <- PROBLEM :(
+                                                                   (100, 50),
+                                                                   (100, 50, 20)]),
+                                "solver": Categorical(["adam", "sgd"]),
+                                "learning_rate": Categorical(["constant", "invscaling"]),
+                                "max_iter": Integer(200, 2000), # [500, 1000, 2000]
+                                "learning_rate_init": Real(0.001, 0.01)}, # [0.001, 0.005]
              # ---
-             "support-vector-machine": {0: {}, # no optimization
-                                        1: {"C": [0.1, 1, 10],
-                                            "kernel": ["linear", "poly", "rbf"],
-                                            "degree": [2, 3, 4],
-                                            "decision_function_shape": ["ovo", "ovr"]}},
+             "support-vector-machine": {"C": Real(0.1, 10), # [0.1, 1, 10]
+                                        "kernel": Categorical(["linear", "poly", "rbf"]),
+                                        "degree": Integer(2, 6), # [2, 3, 4]
+                                        "decision_function_shape": Categorical(["ovo",
+                                                                                "ovr"])},
              # ---
-             "decision-tree": {0: {}, # no optimization
-                               1: {"criterion": ["gini", "entropy"],
-                                   "min_samples_split": [2, 3, 4],
-                                   "min_samples_leaf": [1, 2]}}}
+             "decision-tree": {"criterion": Categorical(["gini", "entropy"]),
+                               "min_samples_split": Integer(2, 5), # [2, 3, 4]
+                               "min_samples_leaf": Integer(1, 3)}} # [1, 2]
     
     def __init__(self,
                  data_path: str,
@@ -320,23 +316,29 @@ class MLModel:
         """
         # display state of the process on screen (optimize hyperparameters)
         print("Optimizing hyperparameters...")
-        # select hyperparameter grid based on <algorithm> and <final_model>
-        param_grid = MLModel.HYPER[self.algorithm][self.final_model]
+        # select hyperparameter grid based on <algorithm>
+        search_spaces = MLModel.HYPER[self.algorithm] # param_grid
         # skip optimization if <param_grid> is empty (avoids unnecessary fit)
-        if not param_grid:
+        if not search_spaces: # param_grid
             best_params = {}
         # otherwise, determine optimal combination of hyperparameters
         else:
+            # the search's exhaustiveness and robustness depends on <self.final_model>
+            num_iter = 32 if self.final_model else 16
+            cv_folds = 5 if self.final_model else 3
             # (cv: "For integer/None inputs, if the estimator is a classifier and y is
             # either binary or multiclass, StratifiedKFold is used. In all other cases,
             # KFold is used. These splitters are instantiated with shuffle=False so the
             # splits will be the same across calls.")
-            grid = GridSearchCV(estimator=self._estimator(),
-                                param_grid=param_grid,
+            opt = BayesSearchCV(estimator=self._estimator(), # GridSearchCV
+                                search_spaces=search_spaces, # param_grid
+                                n_iter=num_iter,
                                 scoring="f1_macro",
+                                cv=cv_folds,
                                 refit=False).fit(x_train, y_train)
-            # assign <grid.best_params_> to <best_params> to match the first case
-            best_params = grid.best_params_
+            # assign <opt.best_params_> to <best_params> to match the first case
+            # (cast to dict -> <opt.best_params_> is an OrderedDict)
+            best_params = dict(opt.best_params_)
         # display and return best combination of hyperparameters
         print(f"- {best_params = }")
         return best_params
@@ -396,6 +398,7 @@ class MLModel:
         # fit model on the best combination of hyperparamters
         print("Fitting estimator on best combination of hyperparameters...")
         model = self._estimator(**params).fit(x_train, y_train)
+        print("DONE")
         # save model to a .joblib file if <final_model> is set to True
         if self.final_model:
             model_name = self.models_dir + "/model-" + self._name_set
