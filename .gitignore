@@ -25,5 +25,6 @@ _models/
 models/
 models_cs/
 results/
+_sequences/
 sequences/
 sequences_cs/
