@@ -1,6 +1,23 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import os
+from contextlib import contextmanager
+
+@contextmanager
+def change_dir(new_path: str) -> None:
+    """
+    Changes directory to <new_path> within the context.
+
+    Parameters
+    ----------
+    new_path: str
+        The path to the target directory
+    """
+    cwd_path = os.path.abspath(".")
+    os.chdir(new_path)
+    yield
+    os.chdir(cwd_path)
 
 def get_args(*args) -> argparse.Namespace:
     """
