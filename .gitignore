@@ -1,6 +1,12 @@
 # FILES
 # ---
+# permanent
+# ---
 .DS_Store
+# ---
+# temporary
+# ---
+src/sub/z*
 
 # FOLDERS
 # ---
