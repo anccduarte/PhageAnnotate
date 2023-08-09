@@ -12,9 +12,10 @@ from sklearn.ensemble import HistGradientBoostingClassifier as HGBC
 from sklearn.ensemble import RandomForestClassifier as RFC
 from sklearn.naive_bayes import GaussianNB as GNB
 from sklearn.neighbors import KNeighborsClassifier as KNC
-from sklearn.neural_network import MLPClassifier as MLPC
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier as DTC
+# MLPClassifier wrapper (works fine with BayesSearchCV -> temporary?)
+from utils import MLPCWrapper as MLPC
 # other sklearn
 from sklearn.base import BaseEstimator
 from sklearn.feature_selection import SelectFromModel
@@ -63,13 +64,12 @@ class MLModel:
                                                                "brute"]),
                                      "p": Integer(1, 2)}, # p -> minkowski power
              # ---
-             "neural-network": {"hidden_layer_sizes": Categorical([(100,), # <- PROBLEM :(
-                                                                   (100, 50),
-                                                                   (100, 50, 20)]),
+             "neural-network": {"num_layers": Integer(1, 6),
+                                "activation": Categorical(["relu", "tanh"]),
                                 "solver": Categorical(["adam", "sgd"]),
                                 "learning_rate": Categorical(["constant", "invscaling"]),
-                                "max_iter": Integer(200, 2000), # [500, 1000, 2000]
-                                "learning_rate_init": Real(0.001, 0.01)}, # [0.001, 0.005]
+                                "learning_rate_init": Real(0.001, 0.01), # [0.001, 0.005]
+                                "max_iter": Integer(200, 2000)}, # [500, 1000, 2000]
              # ---
              "support-vector-machine": {"C": Real(0.1, 10), # [0.1, 1, 10]
                                         "kernel": Categorical(["linear", "poly", "rbf"]),
@@ -110,7 +110,7 @@ class MLModel:
             Whether the model being built belongs to the first set of models (note
             that the second set of models are fed on datasets which encompass
             predictions made by the first set of models)
-        final_model: bool (deafult=False)
+        final_model: bool (default=False)
             Whether the model to be trained is definitive. If set to True, the
             scaler, the support vector (used for feature selection) and the model
             itself are saved in .joblib files for further use (make predictions on
