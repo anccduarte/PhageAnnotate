@@ -167,32 +167,59 @@ class MLModel:
         res = f"{c}({d!r}, {m!r}, {a!r}, {t!r}, {r!r}, {i!r}, {f!r})"
         return res
         
-    def _save_xtest_indices(self, x_test: pd.DataFrame, txt_name: str) -> None:
-        """
-        Saves the indices of the rows assigned for testing purposes. It is only
-        called when <self.final_model> and <self.init> are set to True. Its purpose
-        is to test the second set of models (the ones fed on an expanded dataset
-        encompassing predictions made by the first set of models) on the same data
-        used to test the first set of models.
+    #def _save_xtest_indices(self, x_test: pd.DataFrame, txt_name: str) -> None:
+        #"""
+        #Saves the indices of the rows assigned for testing purposes. It is only
+        #called when <self.final_model> and <self.init> are set to True. Its purpose
+        #is to test the second set of models (the ones fed on an expanded dataset
+        #encompassing predictions made by the first set of models) on the same data
+        #used to test the first set of models.
+        #
+        #Parameters
+        #----------
+        #x_test: pd.DataFrame
+        #    The feature vectors of the testing portion of the data
+        #txt_name: str
+        #    The name to be given to the .txt file storing the indices
+        #"""
+        ## save indices to a .txt file for future use (case study)
+        #with open(txt_name + ".txt", "w") as fout:
+        #    for ind in x_test.index:
+        #        fout.write(str(ind) + "\n")
         
-        Parameters
-        ----------
-        x_test: pd.DataFrame
-            The feature vectors of the testing portion of the data
-        txt_name: str
-            The name to be given to the .txt file storing the indices
-        """
-        # save indices to a .txt file for future use (case study)
-        with open(txt_name + ".txt", "w") as fout:
-            for ind in x_test.index:
-                fout.write(str(ind) + "\n")
-        
+    #def _train_test_split_init(self) -> tuple:
+        #"""
+        #Executes the division of the dataset into training and testing. Returns a
+        #tuple containing 4 numpy arrays: 2 arrays of features (one for training,
+        #other for testing) and 2 arrays of labels (one for training, other for
+        #testing). It is used when <self.init> is set to True.
+        #"""
+        ## display state of the process on screen (train-test split)
+        #print("Performing 'init' train-test split on the dataset...")
+        ## split the dataset into features and labels
+        #df_feats = self._dataset.iloc[:, 1:-1]
+        #df_labels = self._dataset.iloc[:, -1]
+        ## split the data into training and testing sets
+        #x_trn, x_tst, y_trn, y_tst = train_test_split(df_feats,
+        #                                              df_labels,
+        #                                              stratify=df_labels,
+        #                                              test_size=self.test_size,
+        #                                              random_state=self.random_state)
+        ## save <x_tst> indices to a .txt file if <self.final_model> is set to True
+        #if self.final_model:
+        #    txt_name = self.models_dir + "/test-indices-" + self._name_set
+        #    self._save_xtest_indices(x_tst, txt_name)
+        ## return tuple of numpy arrays
+        #return x_trn, x_tst, y_trn, y_tst
+    
     def _train_test_split_init(self) -> tuple:
         """
         Executes the division of the dataset into training and testing. Returns a
-        tuple containing 4 numpy arrays: 2 arrays of features (one for training,
-        other for testing) and 2 arrays of labels (one for training, other for
-        testing). It is used when <self.init> is set to True.
+        tuple containing 2 pd.DataFrame objects (corresponding to the training and
+        testing feature vectors) and 2 pd.Series objects (corresponding to the
+        training and testing label vectors). It executes the train-test split by
+        calling sklearn's function "train_test_split". The method is employed when
+        <self.init> is set to True.
         """
         # display state of the process on screen (train-test split)
         print("Performing 'init' train-test split on the dataset...")
@@ -205,32 +232,59 @@ class MLModel:
                                                       stratify=df_labels,
                                                       test_size=self.test_size,
                                                       random_state=self.random_state)
-        # save <x_tst> indices to a .txt file if <self.final_model> is set to True
+        # save test set to a .csv file if <self.final_model> is set to True
+        # (only executed if both <self.final_model> and <self.init> are set to True)
         if self.final_model:
-            txt_name = self.models_dir + "/test-indices-" + self._name_set
-            self._save_xtest_indices(x_tst, txt_name)
-        # return tuple of numpy arrays
+            csv_name = self.models_dir + "/test-set-" + self._name_set
+            x_tst["Function"] = y_tst
+            x_tst.to_csv(csv_name+".csv")
+        # return tuple of pandas DataFrames/Series
         return x_trn, x_tst, y_trn, y_tst
+    
+    #def _train_test_split_cs(self) -> tuple:
+        #"""
+        #Executes the division of the dataset into training and testing. Returns a
+        #tuple containing 4 numpy arrays: 2 arrays of features (one for training,
+        #other for testing) and 2 arrays of labels (one for training, other for
+        #testing). It is used when <self.init> is set to False.
+        #"""
+        ## display state of the process on screen (train-test split)
+        #print("Performing 'cs' train-test split on the dataset...")
+        ## read test indices
+        #txt_name = "../models" + "/test-indices-" + self._name_set
+        #indices = [int(line.strip()) for line in open(txt_name+".txt").readlines()]
+        ## split the data into training and testing sets
+        #train, test = self._dataset.drop(indices), self._dataset.take(indices)
+        #x_trn, y_trn = train.iloc[:, 1:-1], train.iloc[:, -1]
+        #x_tst, y_tst = test.iloc[:, 1:-1], test.iloc[:, -1]
+        ## return tuple of numpy arrays
+        #return x_trn, x_tst, y_trn, y_tst
     
     def _train_test_split_cs(self) -> tuple:
         """
         Executes the division of the dataset into training and testing. Returns a
-        tuple containing 4 numpy arrays: 2 arrays of features (one for training,
-        other for testing) and 2 arrays of labels (one for training, other for
-        testing). It is used when <self.init> is set to False.
+        tuple containing 2 pd.DataFrame objects (corresponding to the training and
+        testing feature vectors) and 2 pd.Series objects (corresponding to the
+        training and testing label vectors). It executes the train-test split by
+        loading an "init" test set, and creating a training set by removing from
+        <self._dataset> rows that exactly match some row in the test set. The method
+        is employed when <self.init> is set to False.
         """
         # display state of the process on screen (train-test split)
         print("Performing 'cs' train-test split on the dataset...")
-        # read test indices
-        txt_name = "../models" + "/test-indices-" + self._name_set
-        indices = [int(line.strip()) for line in open(txt_name+".txt").readlines()]
-        # split the data into training and testing sets
-        train, test = self._dataset.drop(indices), self._dataset.take(indices)
-        x_trn, y_trn = train.iloc[:, 1:-1], train.iloc[:, -1]
-        x_tst, y_tst = test.iloc[:, 1:-1], test.iloc[:, -1]
-        # return tuple of numpy arrays
+        # read test set from .csv
+        csv_name = "../models" + "/test-set-" + self._name_set
+        test_set = pd.read_csv(csv_name+".csv")
+        # remove entries that exactly match some entry in <test_set>
+        cond = self._dataset.iloc[:, 1:-1].isin(test_set.iloc[:, 1:-1])
+        cond_arr = np.ravel(np.array(cond))
+        train_set = self._dataset.loc[cond_arr==False, :]
+        # split features and labels
+        x_trn, y_trn = train_set.iloc[:, 1:-1], train_set.iloc[:, -1]
+        x_tst, t_tst = test_set.iloc[:, 1:-1], test_set.iloc[:, -1]
+        # return tuple of pandas DataFrames/Series
         return x_trn, x_tst, y_trn, y_tst
-    
+        
     def _scale_data(self, x_train: np.ndarray, x_test: np.ndarray) -> tuple:
         """
         Returns a scaled version of the training and testing data. To scale the data,
@@ -345,6 +399,7 @@ class MLModel:
     
     def _test_model(self,
                     model: BaseEstimator,
+                    x_train: np.ndarray,
                     x_test: np.ndarray,
                     y_test: np.ndarray) -> None:
         """
@@ -355,13 +410,20 @@ class MLModel:
         ----------
         model: BaseEstimator
             An estimator fitted on training data
+        x_train: np.ndarray
+            The feature vectors of training portion of the data (in this context, it
+            is only needed for determining the number of examples in the training set)
         x_test: np.ndarray
             The feature vectors of testing portion of the data
         y_test: np.ndarray
             The label vector of the testing portion of the data
         """
+        # get percentage of data used for testing
+        rows_trn, rows_tst = x_train.shape[0], x_test.shape[0]
+        perc_test = rows_tst / (rows_trn + rows_tst)
         # display state of the process on screen (test model)
-        print(f"\nTesting {self.algorithm.upper()} model ({self._name_set})\n---")
+        print(f"\nTesting {self.algorithm.upper()} model ({self._name_set})")
+        print(f"('x_test' corresponds to {perc_tst:.2%} of the data)\n---")
         # compute predictions
         y_pred = model.predict(x_test)
         # compute metrics and display them on screen
@@ -404,4 +466,4 @@ class MLModel:
             model_name = self.models_dir + "/model-" + self._name_set
             joblib.dump(model, model_name+".joblib")
         # test the fitted estimator (model) on the testing data
-        self._test_model(model, x_test, y_test)
+        self._test_model(model, x_train, x_test, y_test)
