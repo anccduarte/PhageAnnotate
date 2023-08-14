@@ -211,6 +211,35 @@ class MLModel:
         #    self._save_xtest_indices(x_tst, txt_name)
         ## return tuple of numpy arrays
         #return x_trn, x_tst, y_trn, y_tst
+        
+    @staticmethod
+    def _save_test_data_info(x_test: pd.DataFrame,
+                             y_test: pd.Series,
+                             file_name: str) -> None:
+        """
+        Saves the indices of the rows assigned to testing data and the testing data
+        itself. It is only called when <self.final_model> and <self.init> are set to
+        True. This allows for testing the second set of models (the ones fed on an
+        expanded dataset encompassing predictions made by the first set of models)
+        on the same data used to test the first set of models.
+        
+        Parameters
+        ----------
+        x_test: pd.DataFrame
+            The feature vectors of the testing portion of the data
+        y_test: pd.Series
+            The labels vector of the testing portion of the data
+        file_name: str
+            The name to be given to the files storing information on testing data
+        """
+        # save sequence indices to a .txt file (preserved from .fasta)
+        with open(file_name+".txt", "w") as fout:
+            for ind in x_test.index:
+                fout.write(str(ind) + "\n")
+        # save test set to a .csv file (to be loaded in "_train_test_split_cs")
+        test_data = x_test.copy(deep=True)
+        test_data["Function"] = y_test
+        test_data.to_csv(file_name+".csv")
     
     def _train_test_split_init(self) -> tuple:
         """
@@ -232,12 +261,10 @@ class MLModel:
                                                       stratify=df_labels,
                                                       test_size=self.test_size,
                                                       random_state=self.random_state)
-        # save test set to a .csv file if <self.final_model> is set to True
-        # (only executed if both <self.final_model> and <self.init> are set to True)
+        # if <self.final_model> and <self.init> are set to True, save test set info
         if self.final_model:
-            csv_name = self.models_dir + "/test-set-" + self._name_set
-            x_tst["Function"] = y_tst
-            x_tst.to_csv(csv_name+".csv")
+            fname = self.models_dir + "/test-data-" + self._name_set
+            MLModel._save_test_data_info(x_tst, y_tst, fname)
         # return tuple of pandas DataFrames/Series
         return x_trn, x_tst, y_trn, y_tst
     
@@ -266,19 +293,17 @@ class MLModel:
         tuple containing 2 pd.DataFrame objects (corresponding to the training and
         testing feature vectors) and 2 pd.Series objects (corresponding to the
         training and testing label vectors). It executes the train-test split by
-        loading an "init" test set, and creating a training set by removing from
-        <self._dataset> rows that exactly match some row in the test set. The method
-        is employed when <self.init> is set to False.
+        loading "init" test and trainign sets. The method is employed when <self.init>
+        is set to False.
         """
         # display state of the process on screen (train-test split)
         print("Performing 'cs' train-test split on the dataset...")
-        # read test set from .csv
-        csv_name = "../models" + "/test-set-" + self._name_set
-        test_set = pd.read_csv(csv_name+".csv")
-        # remove entries that exactly match some entry in <test_set>
-        cond = self._dataset.iloc[:, 1:-1].isin(test_set.iloc[:, 1:-1])
-        cond_arr = np.ravel(np.array(cond))
-        train_set = self._dataset.loc[cond_arr==False, :]
+        # read test and train sets from .csv files
+        # (assumes that the training set is already processed, that is, that redundant
+        # sequences in the training data relative to the sequences in the testing data
+        # were previously removed using the software CD-HIT)
+        test_set = pd.read_csv(f"../models/test-data-{self._name_set}.csv")
+        train_set = pd.read_csv(f"../database_cs/{self._name_set}.csv")
         # split features and labels
         x_trn, y_trn = train_set.iloc[:, 1:-1], train_set.iloc[:, -1]
         x_tst, t_tst = test_set.iloc[:, 1:-1], test_set.iloc[:, -1]
