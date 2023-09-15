@@ -45,7 +45,7 @@ if __name__ == "__main__":
     
     # initialize <models_dir> and create directory (if not already created...)
     # note: if <final_model> is set to False, <models_dir> is overwritten with
-    # <../_models>; "../models" only stores support vectors for feature selection
+    # "../_models"; "../_models" only stores support vectors for feature selection
     # (the support vectors are saved since they are independent of the algorithm
     # used for a given dataset; this saves a lot of time since 7 distinct models
     # are built for each dataset: instead of computing the same support vector 7

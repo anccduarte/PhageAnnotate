@@ -49,7 +49,7 @@ def distribute_files() -> None:
 # GET RESULTS
 # ---
 
-def _count_sequences(path: str):
+def _count_sequences(path: str) -> int:
     """
     Counts and returns the number of DNA sequences present in the .fasta file
     pointed to by <path>.
