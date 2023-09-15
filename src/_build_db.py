@@ -98,17 +98,20 @@ def build_dbs(dirs: dict, ttable: str, icodons: tuple) -> None:
 
 if __name__ == "__main__":
     
+    """
+    Note: The command line argument "-init" is no longer needed since the "init"
+    and "cs" databases are now built using different Python modules (this has to
+    be the case given the distinct nature of the directory trees storing the
+    "init" and "cs" DNA sequences). Nevertheless, the command line argument will
+    be temporarily kept; however, with the default value of "yes".
+    """
+    
     import utils
     from pathlib import Path
     
     # get command line argument
-    args = utils.get_args(("-init",))
+    args = utils.get_args(("-init", "yes"))
     init = args.init
-    
-    # verify validity of <init> (1)
-    if init is None:
-        raise Exception("<init> has no default value. Please, do:\n"
-                        ">>> python _build_db.py -init <init>")
     
     # verify validity of <init> (2)
     if init not in {"yes", "no"}:
@@ -129,10 +132,6 @@ if __name__ == "__main__":
                    "lysogeny_repressor": "lysogeny-repressor",
                    "packaging": "packaging",
                    "structural": "structural"}
-    
-    # add the dataset "other" to <directories> if not <init>
-    if init == "no":
-        directories["other"] = "other"
     
     # tuple of initiation codons for translation table 11
     icodons = ("TTG", "CTG", "ATT", "ATC", "ATA", "ATG", "GTG")
