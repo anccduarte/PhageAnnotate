@@ -42,6 +42,8 @@ class MLDataset:
         ----------
         _bad_inds: list
             A list object storing indices of unfeaturized sequence records
+        _descriptions: list
+            A list of descriptions associated to the sequence records
         """
         # parameters
         self.file = file
@@ -50,6 +52,7 @@ class MLDataset:
         self.icodons = icodons
         # attributes
         self._bad_inds = []
+        self._descriptions = []
         
     def __repr__(self) -> str:
         """
@@ -329,9 +332,11 @@ class MLDataset:
                 print(f"Featurization failed for {name_prot!r} sequence...")
             else:    
                 dataset = MLDataset._add_entry(dataset, entry, i)
+                self._descriptions.append(seq.description[1:])
         # build pd.DataFrame from the list of datasets
         df_out = pd.concat(datasets + [dataset])
-        # add label column to the dataframe and return it
+        # add descriptions and labels to the dataframe and return it
+        df_out["Description"] = self._descriptions
         df_out["Function"] = [self.prot_name] * (i+1 - len(self._bad_inds))
         return df_out
         
