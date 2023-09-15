@@ -20,8 +20,7 @@ _tests/
 gene_products/
 genomes/
 records/
-src/sub/holins
-src/sub/results_tmhmm
+src/sub/TEMP
 # ---
 # temporary
 # ---
@@ -34,3 +33,6 @@ results/
 _sequences/
 sequences/
 sequences_cs/
+sequences_test_cs/
+_sequences_train_cs/
+sequences_train_cs/
