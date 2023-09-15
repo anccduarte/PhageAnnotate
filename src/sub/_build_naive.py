@@ -98,6 +98,7 @@ def _read_csv(csv_path: str) -> pd.DataFrame:
     """
     # construct mapping for data types
     map_ = collections.defaultdict(lambda: np.float32)
+    map_["Description"] = object
     map_["Function"] = object
     # read .csv (with types specified by <map_>) and return dataset
     # (index_col=[0] gets rid of "Unnamed" column -> keeping the "Unnamed" column

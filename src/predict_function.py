@@ -108,11 +108,13 @@ class PredictFunction:
         Constructs and returns a featurized dataset from the sequences contained in
         the file pointed to by <path>.
         """
+        # build dataset from .fasta of DNA sequences
         data = MLDataset(file=self.path,
                          prot_name="unknown",
                          ttable=self.ttable,
                          icodons=self.icodons).build_dataset()
-        return data.iloc[:, :-1]
+        # return dataset (except for the columns "Description" and "Function")
+        return data.iloc[:, :-2]
         
     def _predict_all(self,
                      vec: pd.Series,
