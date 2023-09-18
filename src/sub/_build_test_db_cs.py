@@ -135,7 +135,7 @@ def build_seq_db_all(file: str, name_dir: str) -> None:
 if __name__ == "__main__":
     
     """
-    Note 1: This module may be executed after the construction of the "final initial"
+    Note: This module may be executed after the construction of the "final initial"
     models ("initial" as they refer to the "init" models; "final" since they refer
     to the models built using the optimal algorithm for each dataset). It builds a
     directory "../../sequences_test_cs", consisting of two subdirectories "all" and

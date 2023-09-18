@@ -4,15 +4,6 @@ import os
 import pandas as pd
 from ml_dataset import MLDataset
 
-"""
-IMPORTANT
----
-The module must be executed in the command line. Importing individual functions
-may throw an error, as some of them include global variables which are only
-accessible to this particular module. These variables are: "DF_ALL", "TO_ADD",
-"SEQUENCES" and "DATABASE".
-"""
-
 def get_protein_name(nfile: str) -> str:
     """
     Returns the protein name contained in <nfile>.
@@ -104,6 +95,11 @@ if __name__ == "__main__":
     be the case given the distinct nature of the directory trees storing the
     "init" and "cs" DNA sequences). Nevertheless, the command line argument will
     be temporarily kept; however, with the default value of "yes".
+    ---
+    Note 2: The module must be executed in the command line. Importing individual
+    functions may throw an error, as some of them include global variables which
+    are only accessible to this particular module. These variables are: "DF_ALL",
+    "TO_ADD", "SEQUENCES" and "DATABASE".
     """
     
     import utils

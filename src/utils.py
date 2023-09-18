@@ -7,6 +7,8 @@ from contextlib import contextmanager
 from sklearn.base import BaseEstimator
 from sklearn.neural_network import MLPClassifier
 
+# --------------------------------------------------------------------------------
+
 # FUNCTIONS
 # ---
 
@@ -46,6 +48,8 @@ def get_args(*args) -> argparse.Namespace:
         parser.add_argument(name, default=default)
     args = parser.parse_args()
     return args
+
+# --------------------------------------------------------------------------------
 
 # CLASSES
 # ---
