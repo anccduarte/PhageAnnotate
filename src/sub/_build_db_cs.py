@@ -45,6 +45,7 @@ def build_db(folder: str) -> None:
     # save "df_class" to a .csv file
     df_class.to_csv(f"{DATABASE}/{get_class_name()}.csv")
         
+        
 if __name__ == "__main__":
     
     """
@@ -66,3 +67,6 @@ if __name__ == "__main__":
     # ---
     folders = [f"{common}/func_classes/{fc}" for fc in func_classes]
     folders.append(f"{common}/all")
+    
+    for folder in folders:
+        build_db(folder=folder)
