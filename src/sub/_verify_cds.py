@@ -8,6 +8,7 @@ def verify_all_cds_from_file(func_class: str, protein: str) -> tuple:
     pointed to by "../../sequences/<func_class>/txid2731619_<protein>.fasta" by
     printing to screen some useful information about a CDS whenever the length
     of the corresponding sequence is not divisible by 3:
+    - ---
     - first codon
     - last codon
     - length of the sequence
@@ -40,6 +41,23 @@ def verify_all_cds_from_file(func_class: str, protein: str) -> tuple:
 
 
 if __name__ == "__main__":
+    
+    """
+    Note: The module is used for validating the quality of the sequences initially
+    retrieved from NCBI's Nucleotide (via executing "_collect.py" with "-base_dir"
+    set to "init"). It checks, for all sequences in a given .fasta file, the length
+    of its sequences; if the length of a sequence is not divisible by 3 (meaning
+    that there is something wrong with the sequence, since codons are constituted
+    by 3 nucleotides), it prints its length, its length modulo 3 (to check how many
+    nucleotides are in excess), its first codon and its last codon (if neither
+    corresponds to an init codon or stop codon, respectively, then something went
+    really bad upon the registering of the sequence in NCBI).
+    ---
+    Note 2: The module is only used to acess the quality of the sequence database
+    in a very embrionary stage of the pipeline of PhageAnnotate and is not of vital
+    importance for the tool's design. However, valuable insights may me drawn from
+    it and hence the decision for its presence in the repository.
+    """
         
     import sys
     sys.path.append("..")
