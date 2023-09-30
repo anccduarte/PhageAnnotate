@@ -11,13 +11,13 @@ warnings.filterwarnings("ignore")
 class CollectSequences:
     
     """
-    Allows for the collection of DNA sequences in NCBI's Nucleotide database according
-    to a set of search terms provided by the user.
+    Allows for the collection of DNA sequences present in the records database, (i.e.,
+    "../records") according to a set of search terms provided by the user.
     """
     
     def __init__(self, db: str, cname: str, terms: list[str], negatives: bool) -> None:
         """
-        Initializes an instance of SeqMining.
+        Initializes an instance of CollectSequences.
         
         Parameters
         ----------
@@ -165,7 +165,7 @@ class CollectSequences:
                 # guard clause 1 -> ignore files not ending in .gb
                 if not in_file.name.endswith(".gb"):
                     continue
-                # read record whose ID is <id_>
+                # read contents of file whose name is <in_file.name>
                 record = SeqIO.read(f"../records/{in_file.name}", "gb")
                 for feature in record.features:
                     # guard clause 2 -> ignore features whose type is not "CDS"

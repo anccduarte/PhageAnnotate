@@ -26,7 +26,7 @@ if __name__ == "__main__":
     # check validity of thresholds
     if any((t<0 or t>1) for t in thresholds):
         raise ValueError("Each threshold in <thresholds> must be in [0, 1].")
-    
+        
     # remaining arguments
     ttable = "11"
     icodons = ("TTG", "CTG", "ATT", "ATC", "ATA", "ATG", "GTG")

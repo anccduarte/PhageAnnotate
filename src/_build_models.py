@@ -11,7 +11,7 @@ if __name__ == "__main__":
     # ---
     # - models_dir: deduced from <init> ("../models" or "../models_cs")
     # - db_name: deduced from <init> ("../database" or "../database_cs")
-    # - test_size: deduced from <final_model> (0.1 or 0.2)
+    # - test_size: 0.2 independently of <final_model> and <init>
     # - behavior of the loop datasets/algorithms determined by <final_model>
     
     import utils
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     
     # initialize <db_name> and <test_size>
     db_name = "database" if init else "database_cs"
-    test_size = 0.1 if final_model else 0.2
+    test_size = 0.2
         
     # initialize <datasets>
     datasets = ["all", "dna_modification", "dna_replication", "lysis",

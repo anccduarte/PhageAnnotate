@@ -82,7 +82,7 @@ def build_gene_products_txt(fname: str) -> int:
     Parameters
     ----------
     fname: str
-        The name tobe given to the .txt file
+        The name to be given to the .txt file
     """
     # get gene products
     ranked_gp = _get_ranked_gene_products(path="../records")
