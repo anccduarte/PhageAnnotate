@@ -3,10 +3,6 @@
 # permanent
 # ---
 .DS_Store
-# ---
-# temporary
-# ---
-src/sub/z*
 
 # FOLDERS
 # ---
@@ -24,6 +20,7 @@ src/sub/TEMP
 # ---
 # temporary
 # ---
+_database/
 database/
 database_cs/
 _models/
