@@ -59,11 +59,7 @@ class PredictFunction:
         self.ttable = ttable
         self.icodons = icodons
         # attributes
-        DATASETS = PredictFunction.DATASETS
-        models, scalers, support_vecs = self._load() #PredictFunction
-        self._models = {ds: mo for (ds, mo) in zip(DATASETS, models)}
-        self._scalers = {ds: sc for (ds, sc) in zip(DATASETS, scalers)}
-        self._support_vecs = {ds: sp for (ds, sp) in zip(DATASETS, support_vecs)}
+        self._models, self._scalers, self._support_vecs = self._load()
         
     def __repr__(self) -> str:
         """
@@ -77,16 +73,16 @@ class PredictFunction:
         Loads and returns the models, scalers and support vectors corresponding to
         each dataset in "DATASETS".
         """
-        models, scalers, support_vecs = [], [], []
-        for ds in PredictFunction.DATASETS:
+        models, scalers, support_vecs = {}, {}, {}
+        for name_ds in PredictFunction.DATASETS:
             # get model, scaler and support for <ds>
-            model = joblib.load(f"../{self.models_dir}/model-{name_ds}.joblib")
-            scaler = joblib.load(f"../{self.models_dir}/scaler-{name_ds}.joblib")
-            support = joblib.load(f"../{self.models_dir}/support-{name_ds}.joblib")
-            # append the latter to the respective lists
-            models.append(model)
-            scalers.append(scaler)
-            support_vecs.append(support)
+            model = joblib.load(f"{self.models_dir}/model-{name_ds}.joblib")
+            scaler = joblib.load(f"{self.models_dir}/scaler-{name_ds}.joblib")
+            support = joblib.load(f"{self.models_dir}/support-{name_ds}.joblib")
+            # add the latter to the respective dictionaries
+            models[name_ds] = model
+            scalers[name_ds] = scaler
+            support_vecs[name_ds] = support
         return models, scalers, support_vecs
     
     def _get_descriptions(self) -> list:
@@ -206,26 +202,27 @@ class PredictFunction:
             preds_func.append(func)
         return preds_func
         
-    def _predict(self) -> tuple:
+    def _predict_hierarquical(self) -> tuple:
         """
         Predicts the functional class and function associated to each feature vector
-        in <X_pred> (each representing a DNA sequence). Returns a tuple of two lists
-        containing the predictions.
+        in <X_to_pred> (each representing a DNA sequence). It returns a tuple of two
+        lists containing the predictions.
         """
         # get featurized dataset and probability thresholds
-        X_pred = self._get_dataset()
+        X_to_pred = self._get_dataset()
         thresh1, thresh2 = self.thresholds
         # predict functional class
-        func_class = self._predict_func_class(X_pred, thresh1)
+        func_class = self._predict_func_class(X_to_pred, thresh1)
         # predict function based on the functional class of each protein
-        preds_func = self._predict_function(X_pred, func_class, thresh2)
+        preds_func = self._predict_function(X_to_pred, func_class, thresh2)
         # return predictions
         return func_class, preds_func
 
-    def save_results(self, name: str) -> None:
+    def predict(self, name: str) -> None:
         """
-        Saves results (predictions) to a .csv file.
-
+        Predicts functional classes and functional roles associated to the sequences
+        present in <self.path>. Saves the results to a .csv file.
+    
         Parameters
         ----------
         name: str
