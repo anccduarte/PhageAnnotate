@@ -3,9 +3,11 @@
 # basic imports
 import collections
 import joblib
+import logging
 import numpy as np
 import os
 import pandas as pd
+import sys
 import warnings
 # sklearn estimators
 from sklearn.ensemble import HistGradientBoostingClassifier as HGBC
@@ -124,6 +126,8 @@ class MLModel:
             The name of the dataset (extension stripped off)
         _estimator: BaseEstimator
             The sklearn estimator to be used when constructing the ML model
+        _logger: logging.Logger
+            A logging.Logger instance
         """
         # parameters
         self.data_path = data_path
@@ -137,13 +141,14 @@ class MLModel:
         self._dataset = MLModel._read_csv(data_path)
         self._name_set = data_path.split("/")[-1].split(".")[0].replace("_","-")
         self._estimator = MLModel.ALGOS[algorithm]
+        self._logger = self._get_logger()
     
     @staticmethod
     def _read_csv(data_path: str) -> pd.DataFrame:
         """
-        Reads and returns the dataset pointed to by <data_path>. All columns except
-        for the last are casted to np.float32, reducing RAM usage by approximately 50%.
-        Returns the newly created dataset.
+        Reads and returns the dataset pointed to by <data_path>. The contents of all
+        columns except for the last two are casted to np.float32, reducing RAM usage
+        by approximately 50%. Returns the newly created dataset.
         
         Parameters
         ----------
@@ -157,6 +162,34 @@ class MLModel:
         # read .csv (with types specified by <map_>) and return the resulting dataset
         return pd.read_csv(data_path, dtype=map_)
     
+    def _get_logger(self):
+        """
+        Creates a logging.Logger composed of two distinct handlers: a stream handler
+        and a file handler. This means that every log message has as its destination
+        both the standard output stream (prints messages to screen) and a file.
+        """
+        # initialize logger instance and set level
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.INFO)
+        # add stream handler to the logger
+        logger.addHandler(logging.StreamHandler(sys.stdout))
+        # add file handler to the logger
+        nfile = f"{self.models_dir}/info-{self._name_set}-{self.algorithm}.log"
+        logger.addHandler(logging.FileHandler(nfile))
+        # return the logger instance
+        return logger
+    
+    def _log(self, message: str) -> None:
+        """
+        Wrapper for "self._logger". Logs with level "info".
+        
+        Parameters
+        ----------
+        message: str
+            The message to be logged
+        """
+        self._logger.info(message)
+    
     def __repr__(self) -> str:
         """
         Returns the string representation of the object.
@@ -169,7 +202,7 @@ class MLModel:
             
     @staticmethod
     def _save_test_data_info(x_test: pd.DataFrame,
-                             y_test: pd.DataFrame,
+                             dl_test: pd.DataFrame,
                              file_name: str) -> None:
         """
         Saves a .txt file containing the labels and descriptions associated to the
@@ -191,7 +224,7 @@ class MLModel:
         """
         # save sequence labels and descriptions to a .txt file
         with open(file_name+".txt", "w") as fout:
-            for row in dl_test.iterrows():
+            for _, row in dl_test.iterrows():
                 label, description = row["Function"], row["Description"]
                 fout.write(f"- {label}: {description}\n")
         # save test set to a .csv file (to be loaded in "_train_test_split_cs")
@@ -208,15 +241,15 @@ class MLModel:
         calling sklearn's function "train_test_split". The method is employed when
         <self.init> is set to True.
         """
-        # display state of the process on screen (train-test split)
-        print("Performing 'init' train-test split on the dataset...")
+        # log state of the process (train-test split)
+        self._log("Performing 'init' train-test split on the dataset...")
         # split the dataset into features and labels
         df_feats = self._dataset.iloc[:, 1:-2] # remove "Description" and "Function"
         df_other = self._dataset.iloc[:, -2:] # keep "Description" and "Function"
         # split the data into training and testing sets
         x_trn, x_tst, dl_trn, dl_tst = train_test_split(df_feats,
                                                         df_other,
-                                                        stratify=df_labels,
+                                                        stratify=df_other.iloc[:, -1],
                                                         test_size=self.test_size,
                                                         random_state=self.random_state)
         # if <self.final_model> and <self.init> are set to True, save test set info
@@ -236,17 +269,18 @@ class MLModel:
         loading "init" test and trainign sets. The method is employed when <self.init>
         is set to False.
         """
-        # display state of the process on screen (train-test split)
-        print("Performing 'cs' train-test split on the dataset...")
+        # log state of the process (train-test split)
+        self._log("Performing 'cs' train-test split on the dataset...")
         # read test and train sets from .csv files
         # (assumes that the training set is already processed, that is, that redundant
         # sequences in the training data relative to the sequences in the testing data
         # were previously removed using the software CD-HIT -> cd-hit-est-2d)
+        train_set = self._dataset #pd.read_csv(f"../database_cs/{self._name_set}.csv")
         test_set = pd.read_csv(f"../models/test-data-{self._name_set}.csv")
-        train_set = pd.read_csv(f"../database_cs/{self._name_set}.csv")
-        # split features and labels (note that "Description" is ignored here...)
-        x_trn, y_trn = train_set.iloc[:, 1:-2], train_set.iloc[:, -1]
-        x_tst, t_tst = test_set.iloc[:, 1:-2], test_set.iloc[:, -1]
+        # split features and labels (note that "Description" is only present in the
+        # training data (*) -> see "_train_test_split_init")
+        x_trn, y_trn = train_set.iloc[:, 1:-2], train_set.iloc[:, -1] # (*) 1:-2
+        x_tst, t_tst = test_set.iloc[:, 1:-1], test_set.iloc[:, -1] # (*) 1:-1
         # return tuple of pandas DataFrames/Series
         return x_trn, x_tst, y_trn, y_tst
         
@@ -263,8 +297,8 @@ class MLModel:
         x_test: np.ndarray
             The feature vectors of the testing portion of the data
         """
-        # display state of the process on screen (scale data)
-        print("Scaling training and testing data...")
+        # log state of the process (scale data)
+        self._log("Scaling training and testing data...")
         # initialize MinMaxScaler and fit it to <x_train>
         scaler = MinMaxScaler().fit(x_train)
         # save scaler to a .joblib file if <final_model> is set to True
@@ -299,8 +333,8 @@ class MLModel:
         x_test: np.ndarray
             The feature vectors of the testing portion of the data
         """
-        # display state of the process on screen (select features)
-        print("Selecting features...")
+        # log state of the process (select features)
+        self._log("Selecting features...")
         # compute and save support vector for feature selection if non existent;
         # otherwise, load it from the appropriate .joblib file
         support_name = self.models_dir + "/support-" + self._name_set
@@ -333,8 +367,8 @@ class MLModel:
         y_train: np.ndarray
             The label vector of the training portion of the data
         """
-        # display state of the process on screen (optimize hyperparameters)
-        print("Optimizing hyperparameters...")
+        # log state of the process (optimize hyperparameters)
+        self._log("Optimizing hyperparameters...")
         # select hyperparameter grid based on <self.algorithm>
         search_spaces = MLModel.HYPER[self.algorithm] # param_grid
         # skip optimization if <search_spaces> is empty (avoids unnecessary fit)
@@ -386,9 +420,9 @@ class MLModel:
         # get percentage of data used for testing
         rows_trn, rows_tst = x_train.shape[0], x_test.shape[0]
         perc_test = rows_tst / (rows_trn + rows_tst)
-        # display state of the process on screen (test model)
-        print(f"\nTesting {self.algorithm.upper()} model ({self._name_set})")
-        print(f"('x_test' corresponds to {perc_test:.2%} of the data)\n---")
+        # log state of the process (test model)
+        self._log(f"\nTesting {self.algorithm.upper()} model ({self._name_set})")
+        self._log(f"('x_test' corresponds to {perc_test:.2%} of the data)\n---")
         # compute predictions
         y_pred = model.predict(x_test)
         # compute metrics and display them on screen
@@ -396,8 +430,8 @@ class MLModel:
         precision = precision_score(y_test, y_pred, average="macro")
         recall = recall_score(y_test, y_pred, average="macro")
         f1_scr = f1_score(y_test, y_pred, average="macro")
-        print(f"Metrics on testing data:\n{accuracy = :.2%}\n{precision = :.2%}\n"
-              f"{recall = :.2%}\nf1-score = {f1_scr:.2%}\n")
+        self._log(f"Metrics on testing data:\n{accuracy = :.2%}\n{precision = :.2%}"
+                  f"\n{recall = :.2%}\nf1-score = {f1_scr:.2%}\n\n")
     
     def build_model(self) -> None:
         """
@@ -406,11 +440,14 @@ class MLModel:
         a MinMaxScaler, selects the most important features by fitting a sklearn's
         SelectFromModel instance on a RandomForestClassifier (fitted on the training
         data) and optimizes the hyperparameters of the estimator chosen by the user.
-        The model is then built using these hyperparameters and the training data.
-        Finally, the model is tested on the testing data.
+        The model is then fitted on the training data using these hyperparameters.
+        Finally, the model is tested on the testing data. If <self.final_model> is
+        set to True, the model is refitted to the whole dataset (train + test) and
+        saved for further use.
         """
-        # display state of the process on screen (build model)
-        print(f"\nBuilding {self.algorithm.upper()} model ({self._name_set})\n---")
+        # log state of the process (build model)
+        algo = self.algorithm.upper()
+        self._log(f"\nBuilding {algo} model ({self._name_set})\n---")
         # train-test split (<self.init> dictates which method is called)
         if self.init:
             x_train, x_test, y_train, y_test = self._train_test_split_init()
@@ -423,12 +460,12 @@ class MLModel:
         # optimize hyperparameters and fit the model based on them
         params = self._optimize_hyperparameters(x_train, y_train)
         # fit model on the best combination of hyperparamters
-        print("Fitting estimator on best combination of hyperparameters...")
+        self._log("Fitting estimator on best combination of hyperparameters...")
         model = self._estimator(**params).fit(x_train, y_train)
-        print("DONE")
-        # save model to a .joblib file if <final_model> is set to True
+        self._log("DONE")
+        # test the fitted estimator (model) on the testing data
+        self._test_model(model, x_train, x_test, y_test)
+        # save model to a .joblib file if <final_model>
         if self.final_model:
             model_name = self.models_dir + "/model-" + self._name_set
             joblib.dump(model, model_name+".joblib")
-        # test the fitted estimator (model) on the testing data
-        self._test_model(model, x_train, x_test, y_test)
