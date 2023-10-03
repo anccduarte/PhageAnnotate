@@ -104,7 +104,9 @@ class MLModel:
         algorithm: str
             The name of the ML algorithm to be used
         test_size: float
-            The proportion of the data to be used for testing
+            The proportion of the data to be used for testing (only relevant if
+            <init> is set to False - if <init> is set to True, the train-test split
+            is carried out via loading the respective sets from memory)
         random_state: int (default=0)
             Controls the split of dataset into training, testing and validation
         init: bool (default=True)
@@ -171,6 +173,8 @@ class MLModel:
         # initialize logger instance and set level
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.INFO)
+        # remove handlers from logger (if existent)
+        logger.handlers.clear()
         # add stream handler to the logger
         logger.addHandler(logging.StreamHandler(sys.stdout))
         # add file handler to the logger
@@ -275,7 +279,7 @@ class MLModel:
         # (assumes that the training set is already processed, that is, that redundant
         # sequences in the training data relative to the sequences in the testing data
         # were previously removed using the software CD-HIT -> cd-hit-est-2d)
-        train_set = self._dataset #pd.read_csv(f"../database_cs/{self._name_set}.csv")
+        train_set = self._dataset
         test_set = pd.read_csv(f"../models/test-data-{self._name_set}.csv")
         # split features and labels (note that "Description" is only present in the
         # training data (*) -> see "_train_test_split_init")
@@ -347,7 +351,7 @@ class MLModel:
             support_vector = selector.get_support()
             joblib.dump(support_vector, support_name+".joblib")
         # display number of selected features
-        print(f"- num_selected = {len(support_vector[support_vector==True])}")
+        self._log(f"- num_selected = {len(support_vector[support_vector==True])}")
         # return shrunken versions of <x_train> and <x_test>
         return x_train[:, support_vector], x_test[:, support_vector]
     
@@ -393,7 +397,7 @@ class MLModel:
             # (cast to dict -> <opt.best_params_> is an OrderedDict)
             best_params = dict(opt.best_params_)
         # display and return best combination of hyperparameters
-        print(f"- {best_params = }")
+        self._log(f"- {best_params = }")
         return best_params
     
     def _test_model(self,
