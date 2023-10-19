@@ -51,6 +51,8 @@ class PredictFunction:
             A dictionary of scaler objects
         _support_vecs: dict
             A dictionary of support vectors (feature selection)
+        _dataset: pd.DataFrame
+            A dataset comprised of featurized sequences and respective descriptions
         """
         # parameters
         self.path = path
@@ -60,6 +62,7 @@ class PredictFunction:
         self.icodons = icodons
         # attributes
         self._models, self._scalers, self._support_vecs = self._load()
+        self._dataset = self._get_dataset()
         
     def __repr__(self) -> str:
         """
@@ -85,20 +88,6 @@ class PredictFunction:
             support_vecs[name_ds] = support
         return models, scalers, support_vecs
     
-    def _get_descriptions(self) -> list:
-        """
-        Parses the .fasta file pointed to by <path> and saves the descriptions of the
-        sequences in a list.
-        """
-        descrips = []
-        with open(self.path) as handle:
-            lines = handle.readlines()
-        for line in lines:
-            if line.startswith(">"):
-                descrip = line[2:-1]
-                descrips.append(descrip)
-        return descrips
-
     def _get_dataset(self) -> pd.DataFrame:
         """
         Constructs and returns a featurized dataset from the sequences contained in
@@ -109,9 +98,11 @@ class PredictFunction:
                          prot_name="unknown",
                          ttable=self.ttable,
                          icodons=self.icodons).build_dataset()
-        # return dataset (except for the columns "Description" and "Function")
-        return data.iloc[:, :-2]
-        
+        # return dataset (except for the column "Function")
+        # indices are reset to avoid "index out of range" when predicting functional
+        # roles (relevant whenever featurization fails for some sequence)
+        return data.iloc[:, :-1].reset_index(drop=True)
+            
     def _predict_all(self,
                      vec: pd.Series,
                      model: str,
@@ -148,7 +139,7 @@ class PredictFunction:
         if np.amax(prob_vec) < threshold:
             function = default
         else:
-            function = estimator.predict(X_vec)[0]
+            function = estimator.classes_[np.argmax(prob_vec)]
         # return the prediction
         return function
     
@@ -172,7 +163,7 @@ class PredictFunction:
             pred = self._predict_all(vec, "all", "other", threshold)
             func_class.append(pred)
         return func_class
-    
+                
     def _predict_function(self,
                           X_pred: pd.DataFrame,
                           func_class: list,
@@ -202,14 +193,14 @@ class PredictFunction:
             preds_func.append(func)
         return preds_func
         
-    def _predict_hierarquical(self) -> tuple:
+    def _predict(self) -> tuple:
         """
         Predicts the functional class and function associated to each feature vector
         in <X_to_pred> (each representing a DNA sequence). It returns a tuple of two
         lists containing the predictions.
         """
-        # get featurized dataset and probability thresholds
-        X_to_pred = self._get_dataset()
+        # get featurized dataset (excludes "Description") and probability thresholds
+        X_to_pred = self._dataset.iloc[:, :-1]
         thresh1, thresh2 = self.thresholds
         # predict functional class
         func_class = self._predict_func_class(X_to_pred, thresh1)
@@ -228,8 +219,8 @@ class PredictFunction:
         name: str
             The name to be given to the .csv file
         """
-        # get descriptions in the .fasta file
-        descrips = self._get_descriptions()
+        # get descriptions in <self._dataset>
+        descrips = self._dataset["Description"]
         # get predictions
         func_class, func = self._predict()
         # construct dataframe
