@@ -1,35 +1,41 @@
 # FILES
 # ---
-# permanent
-# ---
 .DS_Store
+
+# ------------------------------
 
 # FOLDERS
 # ---
+
 # permanent
 # ---
 .ipynb_checkpoints/
 __pycache__/
 _bin/
+_database/
 _experimental/
+_miscellaneous/
+_models/
+_sequences/
+_sequences_cs/
+_sequences_test_cs/
+_sequences_train_cs/
 _tests/
+database/
+database_cs/
 gene_products/
 genomes/
 records/
-src/sub/TEMP
-# ---
-# temporary
-# ---
-_database/
-database/
-database_cs/
-_models/
-models/
-models_cs/
-results/
-_sequences/
 sequences/
 sequences_cs/
 sequences_test_cs/
-_sequences_train_cs/
 sequences_train_cs/
+src/sub/figures/
+src/sub/TEMP
+
+# ---
+# temporary
+# ---
+models/
+models_cs/
+results/
