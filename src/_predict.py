@@ -39,4 +39,4 @@ if __name__ == "__main__":
                     models_dir=models_dir,
                     thresholds=thresholds,
                     ttable=ttable,
-                    icodons=icodons).save_results(name=name)
+                    icodons=icodons).predict(name=name)

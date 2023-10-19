@@ -93,7 +93,7 @@ def distribute_all(path_to_fasta: str, path_to_csv: str) -> tuple:
     """
     # set counters
     # ("other_function" and "good_preds" are dictionaries of counters)
-    other, other_function, good_preds = 0, {}
+    other, other_function, good_preds = 0, {}, {}
     # read files
     fasta_records = SeqIO.parse(path_to_fasta, "fasta")
     predictions = pd.read_csv(path_to_csv)
@@ -124,6 +124,23 @@ if __name__ == "__main__":
     "../../sequences" to a new folder "../../sequences_cs". Also remember that
     the sequences present in the latter will be filtered by CD-HIT-EST. Only
     then, run the module "_build_train_db_cs.py".
+    ---
+    Important note: for this to work properly, MLDataset had to be provisorily
+    modified, i.e., a new fasta file had to be created to only store sequences
+    whose featurization was successfull - "unproblematic_misc.fasta"; such a
+    procedure is imperative since DNA sequences (fasta) are zipped together with
+    the respective predictions (csv): if sequence featurization fails even for a
+    single sequence, the lengths of the fasta and the csv won't agree and, even
+    worse, sequences and predictions will be mismatched; after making predictions
+    on miscellaneous sequences, MLDataset went back to its previous state; these
+    slight modifications occurred at lines:
+    - 315 'with open("../_miscellaneous/unproblematic_misc.fasta", "w") as fout:'
+    - 334 'fout.write(f">{seq.description}\n\n{seq.seq}\n\n")']
+    ---
+    [script to be strictly executed as follows]
+    >>> python _distribute_seqs.py
+               -path_to_fasta ../../_miscellaneous/unproblematic_misc.fasta
+               -path_to_csv ../../results/txid2731619_miscellaneous.csv
     """
         
     import pprint

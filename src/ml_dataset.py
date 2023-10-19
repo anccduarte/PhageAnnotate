@@ -239,7 +239,7 @@ class MLDataset:
         """
         return PyPro.GetProDes(seq).GetCTD()
     
-    # BUILD DATASET ENTRY FROM SEQUENCE
+    # BUILD ENTRY FROM SEQUENCE
     # ---
         
     @staticmethod
@@ -267,7 +267,7 @@ class MLDataset:
                 **MLDataset._secondary_structure_fraction(tseq),
                 **MLDataset._ctd_descriptors(tseq)}
         
-    # ADD ENTRY TO DATASET AND BUILD FINAL DATAFRAME
+    # ADD ENTRY TO DATASET
     # ---
         
     @staticmethod
@@ -330,9 +330,9 @@ class MLDataset:
                 self._bad_inds.append(i)
                 name_prot = " | ".join(seq.description.split(" | ")[2:])
                 print(f"Featurization failed for {name_prot!r} sequence...")
-            else:    
+            else:
                 dataset = MLDataset._add_entry(dataset, entry, i)
-                self._descriptions.append(seq.description[1:])
+                self._descriptions.append(seq.description[1:]) # description[0] is " "
         # build pd.DataFrame from the list of datasets
         df_out = pd.concat(datasets + [dataset])
         # add descriptions and labels to the dataframe and return it

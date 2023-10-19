@@ -73,7 +73,7 @@ if __name__ == "__main__":
         # build model for dataset "all"
         MLModel(data_path=f"{database}/all.csv",
                 models_dir=models,
-                algorithm="k-nearest-neighbors",
+                algorithm="gradient-boosting",
                 test_size=0.2,
                 init=init,
                 final_model=True).build_model()

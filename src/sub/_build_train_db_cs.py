@@ -2,7 +2,7 @@
 
 import os
 import shutil
-import system
+import sys
 sys.path.append("..")
 import utils
 from Bio import SeqIO
@@ -72,9 +72,9 @@ def filter_seqs_train_cs() -> None:
     in "src/ml_model.py" -> "train_test_split_cs").
     """
     # ---
-    def remove_txts(folder: str) -> None:
+    def remove_other(folder: str) -> None:
         for file in os.scandir(folder):
-            if not file.name.endswith(".txt"):
+            if file.name.endswith(".fasta"):
                 continue
             os.remove(f"{folder}/{file.name}")
     # ---
@@ -87,10 +87,11 @@ def filter_seqs_train_cs() -> None:
             sequences_train = f"../PhageAnnotate/sequences_train_cs/func_classes"
             sequences_test = f"../PhageAnnotate/sequences_test_cs/func_classes"
             # iterate through the directories in "sequences_train"
-            for func_class in os.scandir(sequences_train):
-                if not os.path.isdir(func_class):
+            for entry in os.scandir(sequences_train):
+                if not os.path.isdir(entry):
                     continue
                 # if <func_class> is a directory, create a new subdirectory
+                func_class = entry.name
                 os.mkdir(f"{cd_hit_save}/{func_class}")
                 # iterate through the .fasta files in sequences_train/<func_class>
                 for file in os.scandir(f"{sequences_train}/{func_class}"):
@@ -102,8 +103,8 @@ def filter_seqs_train_cs() -> None:
                     out_fasta = f"{cd_hit_save}/{func_class}/{file.name}"
                     cmd = f"cd-hit-est-2d -i {test_fasta} -i2 {train_fasta} -o {out_fasta}"
                     os.system(cmd)
-                # remove .txt files that are also output of cd-hit-est-2d
-                remove_txts(f"{CD_HIT}/{cd_hit_save}/{func_class}")
+                # remove files other than .fasta that are also output of cd-hit-est-2d
+                remove_other(f"{cd_hit_save}/{func_class}")
     # ---
     def filter_all() -> None:
         # modify cwd to "../../../cd-hit"
@@ -123,8 +124,8 @@ def filter_seqs_train_cs() -> None:
                 out_fasta = f"{cd_hit_save}/{file.name}"
                 cmd = f"cd-hit-est-2d -i {test_fasta} -i2 {train_fasta} -o {out_fasta}"
                 os.system(cmd)
-            # remove .txt files that are also output of cd-hit-est-2d
-            remove_txts(f"{CD_HIT}/{cd_hit_save}")
+            # remove files other than .fasta that are also output of cd-hit-est-2d
+            remove_other(cd_hit_save)
     # ---
     def main() -> None:
         os.mkdir(f"{CD_HIT}/results_train_cs")
@@ -143,9 +144,10 @@ if __name__ == "__main__":
     the name "sequences_train_cs".
     """
     
-    # used in "build_temp_train_cs"
+    # global variable used in "build_temp_train_cs"
     BASE = "../.."
-    # used in "filter_seqs_train_cs"
+    # ---
+    # global variable used in "filter_seqs_train_cs"
     CD_HIT = "../../../cd-hit"
     
     # build temporary database of training sequences (this database contains sequences

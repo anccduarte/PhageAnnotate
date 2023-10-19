@@ -18,7 +18,7 @@ def build_db(folder: str) -> None:
         be featurized
     """
     # ---
-    def get_prot_name(file_name: str) -> str:
+    def get_prot_name(nfile: str) -> str:
         _, *temp = nfile.split("_")
         temp[-1] = temp[-1].split(".")[0]
         return "-".join(temp)
@@ -32,6 +32,7 @@ def build_db(folder: str) -> None:
     icodons = ("TTG", "CTG", "ATT", "ATC", "ATA", "ATG", "GTG")
     df_class = pd.DataFrame()
     # iterate through the sequences in "folder"
+    print(f"Processing {folder!r}...")
     for file in os.scandir(folder):
         if not file.name.endswith(".fasta"):
             continue

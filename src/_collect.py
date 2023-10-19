@@ -308,7 +308,7 @@ def get_miscellaneous() -> None:
     # initialize terms
     terms = {"miscellaneous": values}
     # get DNA sequences coding for miscellaneous proteins
-    get_sequences(db=BASE_DIR+"miscellaneous", terms=terms, negatives=True)
+    get_sequences(db=BASE_DIR, terms=terms, negatives=True)
          
     
 if __name__ == "__main__":
@@ -339,7 +339,7 @@ if __name__ == "__main__":
         raise ValueError(f"'{class_}' is not a valid class. Choose one of {{{', '.join(options)}}}.")
         
     # initialize BASE_DIR and create directory (if not already created)
-    BASE_DIR = "../sequences/" if base_dir == "init" else "../sequences_cs/"
+    BASE_DIR = "../sequences/" if base_dir == "init" else "../_miscellaneous"
     Path(BASE_DIR).mkdir(exist_ok=True)
             
     # initialize function dictionary
@@ -349,7 +349,6 @@ if __name__ == "__main__":
              "lysogeny-repressor": get_lysogeny_repressor,
              "packaging": get_packaging,
              "structural": get_structural,
-             "hypothetical": get_hypothetical,
              "miscellaneous": get_miscellaneous}
     
     # call appropriate function

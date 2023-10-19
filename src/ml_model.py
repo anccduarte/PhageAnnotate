@@ -76,7 +76,8 @@ class MLModel:
                                         "kernel": Categorical(["linear", "poly", "rbf"]),
                                         "degree": Integer(2, 6), # [2, 3, 4]
                                         "decision_function_shape": Categorical(["ovo",
-                                                                                "ovr"])},
+                                                                                "ovr"]),
+                                        "probability": Categorical([True])},
              # ---
              "decision-tree": {"criterion": Categorical(["gini", "entropy"]),
                                "min_samples_split": Integer(2, 5), # [2, 3, 4]

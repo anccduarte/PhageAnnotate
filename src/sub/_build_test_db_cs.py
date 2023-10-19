@@ -2,6 +2,7 @@
 
 import os
 from Bio import SeqIO
+from pathlib import Path
 
 # --------------------------------------------------------------------------------
 
@@ -79,7 +80,7 @@ def build_seq_db_func_class(file: str, name_dir: str) -> None:
         # ---
         func_class = get_name_func_class()
         path_test_seqs = f"{name_dir}/{func_class}"
-        os.mkdir(path_test_seqs)
+        Path(path_test_seqs).mkdir(exist_ok=True)
         # ---
         lines_file = readlines_file(file)
         labels_dict = build_labels_dict(lines_file)
@@ -147,18 +148,18 @@ if __name__ == "__main__":
     testing sequences selected for the dataset "ALL", upon the train-test split.
     """
     
-    os.mkdir("../../sequences_test_cs")
+    Path("../../sequences_test_cs").mkdir(exist_ok=True)
     
     func_class_dir = "../../sequences_test_cs/func_classes"
-    os.mkdir(func_class_dir)
+    Path(func_class_dir).mkdir(exist_ok=True)
     
     all_dir = "../../sequences_test_cs/all"
-    os.mkdir(all_dir)
+    Path(all_dir).mkdir(exist_ok=True)
     
     files = ("test-data-dna-modification.txt",
              "test-data-dna-replication.txt",
              "test-data-lysis.txt",
-             "test-data-lysosgeny-repressor.txt",
+             "test-data-lysogeny-repressor.txt",
              "test-data-packaging.txt",
              "test-data-structural.txt",
              "test-data-all.txt")
