@@ -285,7 +285,7 @@ class MLModel:
         # split features and labels (note that "Description" is only present in the
         # training data (*) -> see "_train_test_split_init")
         x_trn, y_trn = train_set.iloc[:, 1:-2], train_set.iloc[:, -1] # (*) 1:-2
-        x_tst, t_tst = test_set.iloc[:, 1:-1], test_set.iloc[:, -1] # (*) 1:-1
+        x_tst, y_tst = test_set.iloc[:, 1:-1], test_set.iloc[:, -1] # (*) 1:-1
         # return tuple of pandas DataFrames/Series
         return x_trn, x_tst, y_trn, y_tst
         

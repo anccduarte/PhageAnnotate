@@ -7,24 +7,13 @@ if __name__ == "__main__":
     datasets in parallel. To do that, one has to open two terminal windows
     and write the following commands:
     ---
-    [Terminal 1] % python _build_models.py -data all
-    [Terminal 2] % python _build_models.py -data all-other
-    ---
-    The result are the final "init" models that will eventually be used to
-    make predictions on "miscellaneous" proteins. According to these
-    predictions the sequences are placed in the appropriate files and new
-    models are trained based on the expanded database. These models will
-    only be used if they yield better results than the original ones. Hence,
-    the models trained here, may possibly be the ones comprising the tool.
+    [Terminal 1] % python _build_models.py -data all -init [yes, no]
+    [Terminal 2] % python _build_models.py -data all-other -init [yes, no]
     """
     
     import pathlib
     import utils
     from ml_model import MLModel
-    
-    # create "models" directory (if not already created)
-    # ---
-    pathlib.Path("../models").mkdir(exist_ok=True)
     
     # get command line argument "data"
     # ---
@@ -57,6 +46,10 @@ if __name__ == "__main__":
         database, models = "../database", "../models"
     else:
         database, models = "../database_cs", "../models_cs"
+        
+    # create "models" directory (if not already created)
+    # ---
+    pathlib.Path(models).mkdir(exist_ok=True)
         
     # mapping between datasets ("all-other") and ML algorithms
     # ---
