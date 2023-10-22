@@ -14,18 +14,19 @@ __pycache__/
 _bin/
 _database/
 _experimental/
+_genomes/
 _miscellaneous/
 _models/
 _sequences/
 _sequences_cs/
 _sequences_test_cs/
 _sequences_train_cs/
-_tests/
 database/
 database_cs/
 gene_products/
 genomes/
 records/
+results/
 sequences/
 sequences_cs/
 sequences_test_cs/
@@ -38,4 +39,3 @@ src/sub/TEMP
 # ---
 models/
 models_cs/
-results/
