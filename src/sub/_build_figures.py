@@ -147,6 +147,36 @@ def miscellaneous() -> None:
     # save assembly of figures
     plt.savefig(f"figures/misc_thresholds.png")
     plt.close()
+    
+def try_thresh_genomes() -> None:
+    """
+    Constructs figure depicting, for all phage genomes (i.e., Acinetobacter,
+    Providencia, Staphylococcus 1 and Staphylococcus 2), the annotation
+    coverages attained for each set of probability thresholds (i.e., 50-95%).
+    """
+    # ---
+    thresh = [float(f"0.{val}") for val in range(50, 100, 5)]
+    inform_preds = {"Acinetobacter phage":
+                       [0.61, 0.60, 0.47, 0.39, 0.33, 0.30, 0.21, 0.16, 0.12, 0.09],
+                    "Providencia phage":
+                       [0.81, 0.76, 0.65, 0.56, 0.48, 0.43, 0.37, 0.33, 0.22, 0.15],
+                    "Staphylococcus phage 1":
+                       [0.69, 0.59, 0.55, 0.48, 0.41, 0.34, 0.26, 0.22, 0.15, 0.08],
+                    "Staphylococcus phage 2":
+                       [0.85, 0.70, 0.55, 0.55, 0.50, 0.50, 0.50, 0.40, 0.30, 0.25]}
+    # ---
+    fig, ax = plt.subplots(2, 2)
+    fig.tight_layout(h_pad=2); fig.set_size_inches(10, 6)
+    # ---
+    coords = ((0, 0), (0, 1), (1, 0), (1, 1))
+    for coord, (name, vals) in zip(coords, inform_preds.items()):
+        ax[coord].plot(thresh, vals, '.-')
+        ax[coord].axhline(y=0.5, color='r', linestyle='--')
+        ax[coord].set_xticks(thresh)
+        ax[coord].set_title(name, fontsize=10, style="italic")
+    # ---
+    plt.savefig(f"figures/try_threshs.png")
+    plt.close()
         
     
 if __name__ == "__main__":
@@ -166,7 +196,8 @@ if __name__ == "__main__":
         
     options = {"hierarchical": hierarchical,
                "hierarchical_x": hierarchical_x,
-               "miscellaneous": miscellaneous}
+               "miscellaneous": miscellaneous,
+               "try-tresh-genomes": try_thresh_genomes}
     
     if action not in options:
         opt_set = "{" + ", ".join(list(options.keys())) + "}"
