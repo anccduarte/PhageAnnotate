@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import FuncFormatter
 
 def _construct_figure(metrics: dict,
                       x_labels: list,
@@ -57,7 +58,7 @@ def construct_figure(metrics: dict,
               "Pack", "Struct")
     # ---
     fig, ax = plt.subplots(2, 2)
-    fig.tight_layout(h_pad=2); fig.set_size_inches(10, 6)
+    fig.tight_layout(h_pad=2.5); fig.set_size_inches(10, 6)
     # ---
     coords = ((0, 0), (0, 1), (1, 0), (1, 1))
     for coord, (name, vals) in zip(coords, metrics.items()):
@@ -75,7 +76,7 @@ def construct_figure(metrics: dict,
                           label=x_label)
             multiplier += 1
         # ---
-        ax[coord].set_ylabel("%")
+        ax[coord].set_ylabel("Score (%)")
         ax[coord].set_title(name)
         ax[coord].set_xticks(x+width,
                              labels,
@@ -140,10 +141,17 @@ def miscellaneous() -> None:
               139420, 102040, 62470]
     errors = [62, 73, 58, 47, 51, 53, 51, 46, 40, 32]
     # construct plot thresholds-errors
-    fig, ax = plt.subplots(1, 2); fig.set_size_inches(12, 4)
-    left, right = "# 'informative' predictions", "Error"
-    ax[0].plot(thresh, inform, '.-r'); ax[0].set_title(left)
-    ax[1].plot(thresh, errors, '.-b'); ax[1].set_title(right)
+    fig, ax = plt.subplots(1, 2); fig.set_size_inches(12, 4.2)
+    # ---
+    ax[0].plot(thresh, inform, '.-r')
+    ax[0].set_xlabel("Thresholds", labelpad=6.0)
+    ax[0].set_ylabel("Number of 'informative' predictions", labelpad=10.0)
+    formatter = FuncFormatter(lambda x, pos: f"{int(x*1e-3)}K")
+    ax[0].yaxis.set_major_formatter(formatter)
+    # ---
+    ax[1].plot(thresh, errors, '.-b')
+    ax[1].set_xlabel("Thresholds", labelpad=6.0)
+    ax[1].set_ylabel("Error (%)", labelpad=8.0)
     # save assembly of figures
     plt.savefig(f"figures/misc_thresholds.png")
     plt.close()
@@ -166,7 +174,7 @@ def try_thresh_genomes() -> None:
                        [0.85, 0.70, 0.55, 0.55, 0.50, 0.50, 0.50, 0.40, 0.30, 0.25]}
     # ---
     fig, ax = plt.subplots(2, 2)
-    fig.tight_layout(h_pad=2); fig.set_size_inches(10, 6)
+    fig.tight_layout(h_pad=3); fig.set_size_inches(10, 6)
     # ---
     coords = ((0, 0), (0, 1), (1, 0), (1, 1))
     for coord, (name, vals) in zip(coords, inform_preds.items()):
@@ -174,6 +182,8 @@ def try_thresh_genomes() -> None:
         ax[coord].axhline(y=0.5, color='r', linestyle='--')
         ax[coord].set_xticks(thresh)
         ax[coord].set_title(name, fontsize=10, style="italic")
+        ax[coord].set_xlabel("Thresholds")
+        ax[coord].set_ylabel("'Informative' predictions (%)")
     # ---
     plt.savefig(f"figures/try_threshs.png")
     plt.close()
@@ -197,7 +207,7 @@ if __name__ == "__main__":
     options = {"hierarchical": hierarchical,
                "hierarchical_x": hierarchical_x,
                "miscellaneous": miscellaneous,
-               "try-tresh-genomes": try_thresh_genomes}
+               "try-thresh-genomes": try_thresh_genomes}
     
     if action not in options:
         opt_set = "{" + ", ".join(list(options.keys())) + "}"
