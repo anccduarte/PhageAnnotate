@@ -38,7 +38,7 @@ if __name__ == "__main__":
     icodons = ("TTG", "CTG", "ATT", "ATC", "ATA", "ATG", "GTG")
     
     # get name of the file
-    name = path.split("/")[-1].split(".")[0]
+    name = file.split("/")[-1].split(".")[0]
     
     # get predictions
     PredictFunction(path=file,

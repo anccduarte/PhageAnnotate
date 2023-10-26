@@ -94,6 +94,7 @@ class PredictFunction:
         the file pointed to by <path>.
         """
         # build dataset from .fasta of DNA sequences
+        print("Processing DNA sequences...")
         data = MLDataset(file=self.path,
                          prot_name="unknown",
                          ttable=self.ttable,
@@ -203,8 +204,10 @@ class PredictFunction:
         X_to_pred = self._dataset.iloc[:, :-1]
         thresh1, thresh2 = self.thresholds
         # predict functional class
+        print("Predicting functional classes...")
         func_class = self._predict_func_class(X_to_pred, thresh1)
         # predict function based on the functional class of each protein
+        print("Predicting functional roles...")
         preds_func = self._predict_function(X_to_pred, func_class, thresh2)
         # return predictions
         return func_class, preds_func
@@ -228,4 +231,5 @@ class PredictFunction:
                                 "Functional-Class": func_class,
                                 "Function": func})
         # save to .csv file
-        df.to_csv(f"../results/{name}.csv")
+        # modified so that "predict.py" correctly works (removed "../")
+        df.to_csv(f"results/{name}.csv")
