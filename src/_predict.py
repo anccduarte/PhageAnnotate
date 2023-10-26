@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # check whether <path> and <models_dir> were provided to sys.argv
     if path is None or models_dir is None:
         e = ("'path' and 'models_dir' have no default values. Please, do:\n"
-             ">>> python gene_products.py -path <path> -models_dir <models_dir>")
+             ">>> python _predict.py -path <path> -models_dir <models_dir>")
         raise Exception(e)
     
     # check validity of thresholds

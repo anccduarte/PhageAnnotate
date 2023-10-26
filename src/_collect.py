@@ -258,38 +258,7 @@ def get_structural(only_terms: bool = False) -> None:
     else:
         # initialize function attribute
         get_structural.terms = terms
-    
-#def get_hypothetical(only_terms: bool = False) -> None:
-#    """
-#    Retrieves DNA sequences annotated as "hypothetical protein". Note that this annotation may have two distinct
-#    meanings: 1. the function coded by the sequence is not yet known; 2. the function coded by the sequence is
-#    already known, but, for some reason, the sequence was not properly annotated. If <only_terms> is set to True,
-#    the sequences are not retrieved and a function attribute is set to "terms".
-#    
-#    Parameters
-#    ----------
-#    only_terms: bool
-#        Whether to only get the terms associated to the functional class
-#    """
-#    # terms for hypothetical proteins
-#    terms = {"hypothetical": ["hypothetical", "hypothetical protein", "conserved hypothetical protein",
-#                              "protein of unknown function", "protein of unknown function duf859",
-#                              "protein of unknown function", "protein of unknown function (duf551)",
-#                              "unknown", "unknown function", "protein of unknown function (duf1492)",
-#                              "protein of unknown function (duf4376)", "protein of unknown function (duf1351)",
-#                              "protein of unknown function (duf2634)", "protein of unknown function (duf2577)",
-#                              "protein of unknown function (duf1018)", "protein of unknown function (duf2612)",
-#                              "protein of unknown function (duf2829)", "protein of unknown function (duf722)",
-#                              "protein of unknown function (duf4969)", "protein of unknown function duf1424",
-#                              "protein of unknown function (duf669)", "protein of unknown function (duf1642)",
-#                              "protein of unknown function (duf1366)"]}
-#    if not only_terms:
-#        # get DNA sequences coding for hypothetical proteins
-#        get_sequences(db=BASE_DIR+"hypothetical", terms=terms, negatives=False)
-#    else:
-#        # initialize function attribute
-#        get_hypothetical.terms = terms
-        
+            
 def get_miscellaneous() -> None:
     """
     Retrieves DNA sequences coding for miscellaneous proteins, that is, proteins whose common name is not present

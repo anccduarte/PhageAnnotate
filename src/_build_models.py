@@ -26,8 +26,9 @@ if __name__ == "__main__":
     
     # check validity of command line arguments (1)
     if final_model is None or init is None:
-        raise Exception("'final_model' and 'init' have no default values. Please do:\n"
-                        ">>> python -final_model <final_model> -init <init>")
+        f, i = "final_model", "init"
+        raise Exception(f"{f!r} and {i!r} have no default values. Please do:\n"
+                        f">>> python _build_models.py -{f} <{f}> -{i} <{i}>")
         
     # check validity of <final_model> (2)
     if final_model not in {"yes", "no"}:
