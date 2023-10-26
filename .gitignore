@@ -1,6 +1,8 @@
 # FILES
 # ---
 .DS_Store
+models/info*
+models/test*
 
 # --------------------
 
