@@ -36,14 +36,11 @@ if __name__ == "__main__":
     # remaining arguments
     ttable = "11"
     icodons = ("TTG", "CTG", "ATT", "ATC", "ATA", "ATG", "GTG")
-    
-    # get name of the file
-    name = file.split("/")[-1].split(".")[0]
-    
+        
     # get predictions
-    PredictFunction(path=file,
+    PredictFunction(path=f"genomes/{file}",
                     models_dir="models",
                     thresholds=thresholds,
                     ttable=ttable,
-                    icodons=icodons).predict(name=name)
+                    icodons=icodons).predict(name=file.split(".")[0])
     
